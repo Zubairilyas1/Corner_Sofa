@@ -5,6 +5,7 @@ CREATE TABLE products (
   title VARCHAR NOT NULL,
   description TEXT,
   base_price DECIMAL(10, 2) NOT NULL,
+  compare_at_price DECIMAL(10, 2),
   images TEXT[] NOT NULL,
   category VARCHAR,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
@@ -18,6 +19,8 @@ CREATE TABLE product_variants (
   sku VARCHAR UNIQUE NOT NULL,
   price DECIMAL(10, 2) NOT NULL,
   color VARCHAR,
+  color_hex VARCHAR(7),
+  images TEXT[] NOT NULL DEFAULT '{}',
   stock INT DEFAULT 10
 );
 

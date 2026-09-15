@@ -1,7 +1,7 @@
 import { ButtonHTMLAttributes, forwardRef, ReactNode } from 'react';
 
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: 'primary' | 'secondary' | 'ghost' | 'contrast' | 'glass' | 'glass-outline';
+  variant?: 'primary' | 'secondary' | 'ghost' | 'contrast' | 'glass' | 'glass-outline' | 'success' | 'warning' | 'danger' | 'info';
   size?: 'sm' | 'md' | 'lg';
   rounded?: boolean;
   loading?: boolean;
@@ -15,6 +15,10 @@ const variantStyles: Record<string, string> = {
   contrast: 'bg-contrast text-white hover:bg-accent rounded-full',
   glass: 'glass-btn text-white rounded-full',
   'glass-outline': 'glass-btn-outline text-dark rounded-full',
+  success: 'bg-emerald-600 text-white hover:bg-emerald-700 shadow-lg shadow-emerald-900/10 rounded-full',
+  warning: 'bg-amber-500 text-slate-950 hover:bg-amber-400 shadow-lg shadow-amber-900/10 rounded-full',
+  danger: 'bg-red-600 text-white hover:bg-red-700 shadow-lg shadow-red-900/10 rounded-full',
+  info: 'bg-blue-600 text-white hover:bg-blue-700 shadow-lg shadow-blue-900/10 rounded-full',
 };
 
 const sizeStyles: Record<string, string> = {

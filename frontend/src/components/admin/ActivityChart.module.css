@@ -1,0 +1,300 @@
+.chart {
+  min-width: 0;
+  flex: 1;
+  padding: 21px 23px 18px;
+  color: #f2f0f5;
+}
+
+.heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.heading h2 {
+  margin: 0;
+  color: #f2f0f5;
+  font-family: inherit;
+  font-size: 15px;
+  line-height: 1.35;
+  font-weight: 450;
+  letter-spacing: -0.3px;
+}
+
+.periods {
+  display: inline-flex;
+  flex-shrink: 0;
+  padding: 2px;
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-radius: 30px;
+  background: rgba(15, 15, 20, 0.15);
+}
+
+.periods button {
+  border: 1px solid transparent;
+  border-radius: 24px;
+  background: transparent;
+  padding: 6px 15px;
+  font: inherit;
+  color: #c8c6d0;
+  font-size: 11px;
+  line-height: 1.4;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: color 160ms ease, background 160ms ease, border-color 160ms ease;
+}
+
+.periods button:hover {
+  color: white;
+  background: rgba(255, 255, 255, 0.055);
+}
+
+.periods button.selectedPeriod {
+  color: #fff;
+  border-color: rgba(255, 255, 255, 0.13);
+  background: #41404b;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.12);
+}
+
+.periods button:focus-visible {
+  outline: 2px solid #bab6ff;
+  outline-offset: 3px;
+}
+
+.graph {
+  position: relative;
+  height: 166px;
+  margin-top: 23px;
+  padding: 3px 0 26px 34px;
+}
+
+.yAxis {
+  position: absolute;
+  left: 0;
+  top: -3px;
+  bottom: 20px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  color: #b5b2c0;
+  font-size: 10px;
+  font-variant-numeric: tabular-nums;
+}
+
+.plot {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+.svg {
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.horizontalGrid {
+  stroke: rgba(255, 255, 255, 0.045);
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+}
+
+.verticalGrid {
+  stroke: rgba(255, 255, 255, 0.07);
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+}
+
+.activeLine {
+  stroke: rgba(255, 255, 255, 0.2);
+  stroke-dasharray: 3 4;
+  vector-effect: non-scaling-stroke;
+}
+
+.hitTarget {
+  cursor: crosshair;
+  outline: none;
+}
+
+.hitTarget:focus-visible {
+  stroke: rgba(186, 182, 255, 0.5);
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+  fill: rgba(186, 182, 255, 0.035);
+}
+
+.xAxis {
+  position: absolute;
+  inset: auto 0 -25px;
+  height: 14px;
+  color: #b5b2c0;
+  font-size: 10px;
+}
+
+.xAxis span {
+  position: absolute;
+  white-space: nowrap;
+}
+
+.legend {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 10px 21px;
+  margin-top: 13px;
+  color: #c4c0ce;
+  font-size: 10px;
+}
+
+.legend > span,
+.tooltip > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.legend i,
+.tooltip i {
+  display: inline-block;
+  flex-shrink: 0;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+}
+
+.legend .unavailable {
+  color: #aaa6b4;
+}
+
+.unavailable i {
+  opacity: 0.5;
+}
+
+.legend em {
+  color: #b9b5c3;
+  font-style: normal;
+  font-size: 9px;
+  padding: 1px 5px;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.055);
+}
+
+.emptyState {
+  position: absolute;
+  inset: 17px 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 15px;
+  text-align: center;
+  color: #aaa6b8;
+  font-size: 11px;
+  line-height: 1.65;
+  pointer-events: none;
+}
+
+.emptyState strong {
+  color: #e4e0eb;
+  font-size: 12px;
+  font-weight: 450;
+}
+
+.tooltip {
+  position: absolute;
+  top: 0;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 182px;
+  padding: 11px 12px;
+  transform: translateX(-50%);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 10px;
+  background: rgba(60, 57, 70, 0.96);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+  backdrop-filter: blur(12px);
+  pointer-events: none;
+  color: #e2dfeb;
+  font-size: 10px;
+}
+
+.tooltip > strong {
+  margin-bottom: 3px;
+  color: white;
+  font-size: 11px;
+  font-weight: 500;
+}
+
+.tooltip b {
+  margin-left: auto;
+  color: white;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+}
+
+.spinner {
+  animation: spin 1.3s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+@media (max-width: 1200px) {
+  .heading { align-items: flex-start; flex-direction: column; gap: 12px; }
+  .periods button { padding-inline: 14px; }
+  .graph { height: 176px; margin-top: 19px; }
+}
+
+@media (max-width: 700px) {
+  .chart { padding: 20px 18px 18px; }
+  .heading { flex-direction: row; align-items: center; }
+  .graph { height: 192px; }
+}
+
+@media (max-width: 440px) {
+  .heading { flex-direction: column; align-items: flex-start; }
+  .heading h2 { font-size: 16px; }
+  .periods { width: 100%; }
+  .periods button { flex: 1; padding-block: 7px; }
+  .graph { padding-left: 25px; }
+  .legend { column-gap: 13px; }
+  .emptyState { padding: 5px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .periods button { transition: none; }
+  .spinner { animation: none; }
+}
+
+/* Saved light/dark theme palettes */
+:global(html[data-theme="light"]) .chart{color:rgba(48,62,52,1)}
+:global(html[data-theme="light"]) .heading h2{color:rgba(48,62,52,1)}
+:global(html[data-theme="light"]) .periods{border:1px solid rgba(200,207,196,0.09);background:rgba(245,246,242,0.15)}
+:global(html[data-theme="light"]) .periods button{color:rgba(48,62,52,1)}
+:global(html[data-theme="light"]) .periods button:hover{color:rgba(48,62,52,1)}
+:global(html[data-theme="light"]) .periods button.selectedPeriod{color:rgba(48,62,52,1);border-color:rgba(200,207,196,0.13);background:rgba(245,246,242,1)}
+:global(html[data-theme="light"]) .yAxis{color:rgba(48,62,52,1)}
+:global(html[data-theme="light"]) .horizontalGrid{stroke:rgba(48,62,52,0.045)}
+:global(html[data-theme="light"]) .verticalGrid{stroke:rgba(48,62,52,0.07)}
+:global(html[data-theme="light"]) .activeLine{stroke:rgba(48,62,52,0.2)}
+:global(html[data-theme="light"]) .hitTarget:focus-visible{stroke:rgba(48,62,52,0.5);fill:rgba(48,62,52,0.035)}
+:global(html[data-theme="light"]) .xAxis{color:rgba(48,62,52,1)}
+:global(html[data-theme="light"]) .legend{color:rgba(48,62,52,1)}
+:global(html[data-theme="light"]) .legend .unavailable{color:rgba(48,62,52,1)}
+:global(html[data-theme="light"]) .legend em{color:rgba(48,62,52,1)}
+:global(html[data-theme="light"]) .emptyState{color:rgba(48,62,52,1)}
+:global(html[data-theme="light"]) .emptyState strong{color:rgba(48,62,52,1)}
+:global(html[data-theme="light"]) .tooltip{border:1px solid rgba(200,207,196,0.2);background:rgba(245,246,242,0.96);color:rgba(48,62,52,1)}
+:global(html[data-theme="light"]) .tooltip > strong{color:rgba(48,62,52,1)}
+:global(html[data-theme="light"]) .tooltip b{color:rgba(48,62,52,1)}
+:global(html[data-theme="dark"]) .periods{border:1px solid rgba(73,85,75,0.09)}
+:global(html[data-theme="dark"]) .periods button:hover{background:rgba(29,35,31,0.055)}
+:global(html[data-theme="dark"]) .periods button.selectedPeriod{border-color:rgba(73,85,75,0.13)}
+:global(html[data-theme="dark"]) .legend em{background:rgba(29,35,31,0.055)}
+:global(html[data-theme="dark"]) .tooltip{border:1px solid rgba(73,85,75,0.2)}

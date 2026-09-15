@@ -14,6 +14,7 @@ interface Swatch {
 interface SwatchRequestModalProps {
   isOpen: boolean;
   onClose: () => void;
+  initialSwatchIds?: string[];
   onSubmit?: (data: {
     customerName: string;
     email: string;
@@ -37,7 +38,7 @@ const MOCK_SWATCHES: Swatch[] = [
   { id: 's12', name: 'Oatmeal', hex_color: '#D4C5A0', image_url: null, material: 'Bouclé' },
 ];
 
-export default function SwatchRequestModal({ isOpen, onClose, onSubmit }: SwatchRequestModalProps) {
+export default function SwatchRequestModal({ isOpen, onClose, initialSwatchIds = [], onSubmit }: SwatchRequestModalProps) {
   const [swatches, setSwatches] = useState<Swatch[]>(MOCK_SWATCHES);
   const [customerName, setCustomerName] = useState('');
   const [email, setEmail] = useState('');
@@ -52,6 +53,8 @@ export default function SwatchRequestModal({ isOpen, onClose, onSubmit }: Swatch
 
   useEffect(() => {
     if (!isOpen) return;
+    setSwatchSelection(initialSwatchIds.slice(0, 4));
+    setErrors({});
     async function fetchSwatches() {
       try {
         const res = await fetch('/api/swatches');
@@ -102,16 +105,8 @@ export default function SwatchRequestModal({ isOpen, onClose, onSubmit }: Swatch
         }),
       });
 
-      if (res.ok) {
-        setSuccess(true);
-        onSubmit?.({
-          customerName,
-          email,
-          address: { line1: addressLine1, line2: addressLine2, city, postcode },
-          swatchIds: swatchSelection,
-        });
-      }
-    } catch {
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || 'Your swatch request could not be submitted. Please try again.');
       setSuccess(true);
       onSubmit?.({
         customerName,
@@ -119,6 +114,8 @@ export default function SwatchRequestModal({ isOpen, onClose, onSubmit }: Swatch
         address: { line1: addressLine1, line2: addressLine2, city, postcode },
         swatchIds: swatchSelection,
       });
+    } catch (error) {
+      setErrors({ form: error instanceof Error ? error.message : 'Your swatch request could not be submitted. Please try again.' });
     }
     setLoading(false);
   };
@@ -215,6 +212,7 @@ export default function SwatchRequestModal({ isOpen, onClose, onSubmit }: Swatch
           <Input label="City" placeholder="London" value={city} onChange={(e) => setCity(e.target.value)} error={errors.city} />
           <Input label="Postcode" placeholder="SW1A 1AA" value={postcode} onChange={(e) => setPostcode(e.target.value)} error={errors.postcode} />
         </div>
+        {errors.form && <p className="text-red-500 text-xs" role="alert">{errors.form}</p>}
         <Button type="submit" variant="primary" size="lg" loading={loading} className="w-full mt-2">
           Submit Request
         </Button>

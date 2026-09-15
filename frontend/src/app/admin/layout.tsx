@@ -1,15 +1,21 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import {
+  Armchair, ArrowUpRight, CalendarDays, LayoutDashboard, LoaderCircle,
+  LockKeyhole, LogOut, Package, Palette, ShoppingBag,
+} from 'lucide-react';
+import styles from './admin-shell.module.css';
 
 const NAV = [
-  { href: '/admin', label: 'Dashboard', icon: '📊' },
-  { href: '/admin/products', label: 'Products', icon: '🛋️' },
-  { href: '/admin/orders', label: 'Orders', icon: '📦' },
-  { href: '/admin/swatch-requests', label: 'Swatches', icon: '🎨' },
-  { href: '/admin/appointments', label: 'Appointments', icon: '📅' },
+  { href: '/admin/alashi', label: 'ALASHI AI', icon: Palette },
+  { href: '/admin', label: 'Dashboard', icon: LayoutDashboard },
+  { href: '/admin/products', label: 'Products', icon: Armchair },
+  { href: '/admin/orders', label: 'Orders', icon: Package },
+  { href: '/admin/swatch-requests', label: 'Swatches', icon: Palette },
+  { href: '/admin/appointments', label: 'Appointments', icon: CalendarDays },
 ];
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
@@ -18,15 +24,19 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loggingIn, setLoggingIn] = useState(false);
-  const pathname = usePathname();
+  const [loggingOut, setLoggingOut] = useState(false);
+  const [logoutError, setLogoutError] = useState('');
+  const pathname = usePathname().replace(/\/+$/, '') || '/';
 
   useEffect(() => {
-    const token = localStorage.getItem('admin_token');
-    const expires = localStorage.getItem('admin_token_expires');
-    if (token && expires && Date.now() < parseInt(expires)) {
-      setAuthenticated(true);
-    }
-    setLoading(false);
+    let active = true;
+    fetch('/api/admin/auth/', { cache: 'no-store' }).then(async response => {
+      const valid = response.ok && (await response.json()).valid;
+      if (active) setAuthenticated(Boolean(valid));
+      if (!valid) { localStorage.removeItem('admin_token'); localStorage.removeItem('admin_token_expires'); }
+    }).catch(() => { if (active) setError('Could not verify your session. Please sign in again.'); })
+      .finally(() => { if (active) setLoading(false); });
+    return () => { active = false; };
   }, []);
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -40,7 +50,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ password }),
       });
-
       const data = await res.json();
 
       if (!res.ok || !data.success) {
@@ -49,8 +58,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         return;
       }
 
-      localStorage.setItem('admin_token', data.token);
-      localStorage.setItem('admin_token_expires', data.expiresAt.toString());
       setAuthenticated(true);
     } catch {
       setError('Connection failed. Please try again.');
@@ -59,114 +66,110 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     }
   };
 
-  const handleLogout = () => {
-    localStorage.removeItem('admin_token');
-    localStorage.removeItem('admin_token_expires');
-    setAuthenticated(false);
-    setPassword('');
+  const handleLogout = async () => {
+    setLoggingOut(true);
+    setLogoutError('');
+    try {
+      const response = await fetch('/api/admin/auth', { method: 'DELETE', signal: AbortSignal.timeout(10000) });
+      if (!response.ok || !(await response.json()).success) throw new Error('Sign-out failed');
+      localStorage.removeItem('admin_token');
+      localStorage.removeItem('admin_token_expires');
+      setAuthenticated(false);
+      setPassword('');
+      setError('');
+    } catch {
+      setLogoutError('Could not sign out. Check your connection and try again.');
+    } finally {
+      setLoggingOut(false);
+    }
   };
 
   if (loading) {
     return (
-      <main className="admin-dark flex items-center justify-center">
-        <div className="text-center">
-          <div className="w-8 h-8 border-2 border-[#C5A880] border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-          <p className="text-xs text-white/30 tracking-[0.2em] uppercase">Loading...</p>
+      <div className={`admin-dark ${styles.shell} ${styles.authPage}`}>
+        <div className={styles.loading} role="status">
+          <LoaderCircle className={styles.spinner} size={28} aria-hidden="true" />
+          <p>Opening your workspace...</p>
         </div>
-      </main>
+      </div>
     );
   }
 
   if (!authenticated) {
     return (
-      <main className="admin-dark flex items-center justify-center relative overflow-hidden">
-        <div className="absolute inset-0">
-          <div className="absolute top-[-20%] right-[-10%] w-[500px] h-[500px] rounded-full bg-[radial-gradient(circle,rgba(197,168,128,0.08)_0%,transparent_70%)]" />
-          <div className="absolute bottom-[-20%] left-[-10%] w-[400px] h-[400px] rounded-full bg-[radial-gradient(circle,rgba(157,102,56,0.06)_0%,transparent_70%)]" />
-        </div>
+      <div className={`admin-dark ${styles.shell} ${styles.authPage}`}>
+        <Link href="/" className={styles.authBrand} aria-label="Corner Sofa home">
+          <Armchair size={23} strokeWidth={1.6} aria-hidden="true" />
+          <span>corner<span className={styles.brandDot}>.</span></span>
+        </Link>
+        <section className={styles.authCard} aria-labelledby="admin-login-title">
+          <div className={styles.lockIcon}><LockKeyhole size={25} strokeWidth={1.6} aria-hidden="true" /></div>
+          <p className={styles.eyebrow}>YOUR STORE, AT A GLANCE</p>
+          <h1 id="admin-login-title">Welcome back<span>.</span></h1>
+          <p className={styles.authDescription}>Sign in to your Corner Sofa workspace.</p>
 
-        <div className="admin-card p-10 w-full max-w-sm relative z-10">
-          <div className="text-center mb-8">
-            <div className="w-12 h-12 rounded-full bg-[rgba(197,168,128,0.1)] border border-[rgba(197,168,128,0.15)] flex items-center justify-center mx-auto mb-4">
-              <span className="text-lg">🔒</span>
+          <form onSubmit={handleLogin} className={styles.authForm}>
+            <label htmlFor="admin-password">Admin password</label>
+            <div className={styles.inputWrap}>
+              <LockKeyhole size={17} aria-hidden="true" />
+              <input
+                id="admin-password"
+                type="password"
+                autoComplete="current-password"
+                placeholder="Enter your password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                aria-describedby={error ? 'admin-login-error' : undefined}
+                aria-invalid={Boolean(error)}
+              />
             </div>
-            <h1 className="text-lg font-light tracking-[0.2em] uppercase text-white/90">Admin Access</h1>
-            <p className="text-[10px] text-white/25 mt-2 tracking-[0.15em] uppercase">Enter password to continue</p>
-          </div>
-
-          {error && (
-            <div className="admin-badge admin-badge-red w-full justify-center mb-4">{error}</div>
-          )}
-
-          <form onSubmit={handleLogin} className="space-y-4">
-            <input
-              type="password"
-              placeholder="Password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="admin-input w-full"
-            />
-            <button
-              type="submit"
-              disabled={loggingIn}
-              className="admin-btn-primary w-full py-3 rounded-xl text-xs uppercase tracking-[0.15em] font-medium disabled:opacity-50"
-            >
-              {loggingIn ? 'Signing in...' : 'Sign In'}
+            {error && <p id="admin-login-error" className={styles.error} role="alert">{error}</p>}
+            <button type="submit" disabled={loggingIn} className={styles.signIn}>
+              {loggingIn ? <><LoaderCircle size={18} className={styles.spinner} aria-hidden="true" /> Signing in...</> : <>Sign in to workspace <ArrowUpRight size={19} aria-hidden="true" /></>}
             </button>
           </form>
-        </div>
-      </main>
+          <Link href="/" className={styles.backToStore}>Back to the store <ArrowUpRight size={14} aria-hidden="true" /></Link>
+        </section>
+        <p className={styles.authFooter}>Corner Sofa · Admin workspace</p>
+      </div>
     );
   }
 
-  const isActive = (href: string) => {
-    if (href === '/admin') return pathname === '/admin';
-    return pathname.startsWith(href);
-  };
+  const isActive = (href: string) => href === '/admin' ? pathname === '/admin' : pathname.startsWith(href);
 
   return (
-    <div className="admin-dark flex min-h-screen">
-      {/* Sidebar */}
-      <aside className="admin-sidebar w-64 flex-shrink-0 flex flex-col fixed h-full z-20">
-        <div className="p-6 border-b border-white/5">
-          <Link href="/admin" className="block">
-            <span className="text-sm font-light tracking-[0.25em] uppercase text-white/90">Corner Sofa</span>
-            <span className="block text-[9px] text-[#C5A880]/60 mt-1 tracking-[0.2em] uppercase">Admin Panel</span>
+    <div className={`admin-dark ${styles.shell}`}>
+      <header className={styles.header}>
+        <div className={styles.headerInner}>
+          <Link href="/admin" className={styles.brand} aria-label="Corner Sofa admin dashboard">
+            <span className={styles.brandIcon}><Armchair size={21} strokeWidth={1.7} aria-hidden="true" /></span>
+            <span className={styles.brandName}>corner<span className={styles.brandDot}>.</span></span>
+            <span className={styles.brandDivider}>/</span>
+            <span className={styles.workspaceLabel}>workspace</span>
           </Link>
-        </div>
 
-        <nav className="flex-1 p-4 space-y-1">
-          {NAV.map((item) => (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={`admin-sidebar-link ${isActive(item.href) ? 'active' : ''}`}
-            >
-              <span className="text-base">{item.icon}</span>
-              <span>{item.label}</span>
+          <nav className={styles.nav} aria-label="Admin navigation">
+            {NAV.map(({ href, label, icon: Icon }) => (
+              <Link key={href} href={href} aria-current={isActive(href) ? 'page' : undefined} className={`${styles.navLink} ${isActive(href) ? styles.active : ''}`}>
+                <Icon size={15} strokeWidth={1.7} aria-hidden="true" />
+                {label}
+              </Link>
+            ))}
+          </nav>
+
+          <div className={styles.headerActions}>
+            <Link href="/" className={styles.viewStore}>
+              <ShoppingBag size={15} strokeWidth={1.7} aria-hidden="true" /><span>View store</span><ArrowUpRight size={13} aria-hidden="true" />
             </Link>
-          ))}
-        </nav>
-
-        <div className="p-4 border-t border-white/5 space-y-1">
-          <Link href="/" className="admin-sidebar-link text-white/30 hover:text-white/60">
-            <span>🌐</span>
-            <span>View Site</span>
-          </Link>
-          <button onClick={handleLogout} className="admin-sidebar-link w-full text-left text-white/30 hover:text-red-400">
-            <span>🚪</span>
-            <span>Sign Out</span>
-          </button>
+            <button onClick={handleLogout} disabled={loggingOut} className={styles.signOut} aria-label="Sign out" aria-busy={loggingOut} title="Sign out">{loggingOut ? <LoaderCircle size={17} className={styles.spinner} aria-hidden="true" /> : <LogOut size={17} strokeWidth={1.7} aria-hidden="true" />}</button>
+            <span className={styles.avatar} aria-label="Admin workspace">CS</span>
+          </div>
         </div>
-      </aside>
-
-      {/* Main Content */}
-      <main className="flex-1 ml-64 p-8 relative">
-        <div className="absolute top-0 right-0 w-[400px] h-[400px] rounded-full bg-[radial-gradient(circle,rgba(197,168,128,0.04)_0%,transparent_70%)] pointer-events-none" />
-        <div className="relative z-10">
-          {children}
-        </div>
-      </main>
+      </header>
+      <div className={`${styles.content} ${pathname !== '/admin' ? styles.legacyContent : ''}`}>
+        {logoutError && <p className={styles.error} role="alert">{logoutError}</p>}
+        {children}
+      </div>
     </div>
   );
 }

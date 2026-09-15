@@ -5,6 +5,7 @@ create table products (
   title text not null,
   description text,
   base_price decimal(10,2) not null,
+  compare_at_price decimal(10,2),
   images text[] not null default '{}',
   category text,
   created_at timestamp with time zone default now()
@@ -19,6 +20,8 @@ create table product_variants (
   price decimal(10,2) not null,
   stock integer default 10,
   color text,
+  color_hex varchar(7),
+  images text[] not null default '{}',
   material text
 );
 

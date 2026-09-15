@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import { Button, Spinner } from '@/components/ui';
-import SwatchRequestModal from '@/components/SwatchRequestModal';
+import { useCart } from '@/context/CartContext';
+import Link from 'next/link';
 
 interface Swatch {
   id: string;
@@ -38,7 +39,16 @@ const MATERIAL_DESCRIPTIONS: Record<string, string> = {
 export default function SwatchesPage() {
   const [swatches, setSwatches] = useState<Swatch[]>(MOCK_SWATCHES);
   const [loading, setLoading] = useState(true);
-  const [showModal, setShowModal] = useState(false);
+  const [selectedSwatch, setSelectedSwatch] = useState<string | null>(null);
+  const [added, setAdded] = useState(false);
+  const { addItem } = useCart();
+
+  const addSwatchToBasket = () => {
+    const swatch = swatches.find((item) => item.id === selectedSwatch);
+    if (!swatch) return;
+    addItem({ productId: `swatch-${swatch.id}`, variantId: `swatch-${swatch.id}`, range_type: swatch.material, color: swatch.name, price: 0, image: swatch.image_url || '/placeholder.svg', title: `Fabric swatch — ${swatch.name}`, itemType: 'swatch' });
+    setAdded(true);
+  };
 
   useEffect(() => {
     async function fetchSwatches() {
@@ -68,7 +78,7 @@ export default function SwatchesPage() {
             Feel the Quality
           </h1>
           <p className="text-sm tracking-widest text-dark/60 uppercase font-medium max-w-lg mx-auto">
-            Request up to 4 free fabric swatches delivered to your door within 5-7 working days
+            Choose one free fabric swatch and add it to your sofa basket
           </p>
         </div>
       </section>
@@ -101,6 +111,14 @@ export default function SwatchesPage() {
                       <div className="p-4">
                         <p className="text-sm font-medium text-dark">{swatch.name}</p>
                         <p className="text-xs text-dark/50 mt-0.5">{material}</p>
+                        <button
+                          type="button"
+                          onClick={() => { setSelectedSwatch(swatch.id); setAdded(false); }}
+                          aria-pressed={selectedSwatch === swatch.id}
+                          className={`mt-3 w-full rounded-lg border px-3 py-2 text-[10px] font-medium uppercase tracking-widest transition-colors ${selectedSwatch === swatch.id ? 'border-accent bg-accent text-white' : 'border-dark/15 text-dark hover:border-accent hover:text-accent'}`}
+                        >
+                          {selectedSwatch === swatch.id ? 'Selected' : 'Select swatch'}
+                        </button>
                       </div>
                     </div>
                   ))}
@@ -110,21 +128,17 @@ export default function SwatchesPage() {
 
             <div className="text-center pt-8 border-t border-gray-200">
               <p className="text-sm text-dark/60 mb-6">
-                Like what you see? Request your free swatches now and feel the fabric before you buy.
+                Choose one swatch and add it to your basket with a sofa. Swatches cannot be purchased on their own.
               </p>
-              <Button variant="primary" size="lg" onClick={() => setShowModal(true)}>
-                Request Free Swatches
+              <Button variant="primary" size="lg" onClick={addSwatchToBasket} disabled={!selectedSwatch}>
+                Add selected swatch to basket
               </Button>
+              {added && <div className="mt-4"><p className="text-sm text-green-700">Swatch added to your basket.</p><Link href="/cart" className="mt-2 inline-block text-xs font-medium text-dark underline underline-offset-4">View basket</Link></div>}
             </div>
           </>
         )}
       </div>
 
-      <SwatchRequestModal
-        isOpen={showModal}
-        onClose={() => setShowModal(false)}
-        onSubmit={(data) => console.log('Swatch request:', data)}
-      />
     </div>
   );
 }

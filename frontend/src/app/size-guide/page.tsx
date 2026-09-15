@@ -13,7 +13,7 @@ const sizes = [
     seats: '2 people',
     roomMin: '3m × 3m',
     description: 'Compact yet comfortable. Perfect for smaller living rooms, apartments, or as a secondary seating area.',
-    image: 'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?auto=format&fit=crop&q=80&w=400',
+    image: '/images/sofas/premium-two-seater.webp',
   },
   {
     type: '3-Seater',
@@ -21,7 +21,7 @@ const sizes = [
     seats: '3 people',
     roomMin: '3.5m × 3.5m',
     description: 'The classic family sofa. Generous seating for everyday comfort without overwhelming the room.',
-    image: 'https://images.unsplash.com/photo-1493663284031-b7e3aefcae8e?auto=format&fit=crop&q=80&w=400',
+    image: '/images/sofas/premium-three-seater.webp',
   },
   {
     type: 'Corner (Left/Right)',
@@ -29,7 +29,7 @@ const sizes = [
     seats: '4–5 people',
     roomMin: '4m × 4m',
     description: 'Maximise seating in open-plan spaces. The L-shape creates a natural conversation area.',
-    image: 'https://images.unsplash.com/photo-1512212621149-107ffe572d2f?auto=format&fit=crop&q=80&w=400',
+    image: '/images/sofas/premium-corner.webp',
   },
   {
     type: 'Recliner',
@@ -37,7 +37,7 @@ const sizes = [
     seats: '1–2 people',
     roomMin: '2.5m × 2.5m',
     description: 'Individual comfort with reclining backrest. Allow 40cm clearance behind for full recline.',
-    image: 'https://images.unsplash.com/photo-1540574163026-643ea20d5d5d?auto=format&fit=crop&q=80&w=400',
+    image: '/images/sofas/premium-recliners.webp',
   },
 ];
 

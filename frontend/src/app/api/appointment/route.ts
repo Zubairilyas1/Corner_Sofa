@@ -1,7 +1,10 @@
+import { requireAdmin } from '@/lib/require-admin';
 import { NextRequest, NextResponse } from 'next/server';
 import { sql } from '@/lib/db';
 
 export async function GET() {
+  const denied = await requireAdmin();
+  if (denied) return denied;
   try {
     const result = await sql`
       SELECT id, customer_name, email, phone, appointment_date, notes, status, created_at

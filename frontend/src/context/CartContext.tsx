@@ -11,6 +11,8 @@ interface CartItem {
   quantity: number;
   image: string;
   title: string;
+  itemType?: 'sofa' | 'swatch';
+  offerToken?: string;
 }
 
 interface CartContextProps {
@@ -54,6 +56,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
 
       if (existingIndex >= 0) {
         const updated = [...prev];
+        updated[existingIndex] = { ...updated[existingIndex], ...item, offerToken: item.offerToken };
         updated[existingIndex].quantity += quantity;
         return updated;
       } else {

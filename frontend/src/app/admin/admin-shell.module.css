@@ -1,0 +1,242 @@
+.shell {
+  min-height: 100vh;
+  min-height: 100dvh;
+  background: #131316;
+  color: #f4f3f7;
+  font-family: 'Inter', 'Segoe UI', Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  color-scheme: dark;
+}
+
+.shell *,
+.shell *::before,
+.shell *::after { box-sizing: border-box; }
+
+.shell :where(a, button, input, select, textarea):focus-visible {
+  outline: 2px solid #aaa2ff;
+  outline-offset: 4px;
+}
+
+.header {
+  border-bottom: 1px solid #ffffff0c;
+  background: #17171c;
+}
+
+.headerInner {
+  width: 100%;
+  max-width: 1500px;
+  min-height: 76px;
+  padding: 0 28px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 26px;
+}
+
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  flex-shrink: 0;
+  color: #f5f5f8;
+  text-decoration: none;
+}
+
+.brandIcon {
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  border: 1px solid #ffffff18;
+  border-radius: 10px;
+  background: #2d2b36;
+  color: #ded9ff;
+}
+
+.brandName { font-size: 23px; font-weight: 600; letter-spacing: -1.2px; }
+.brandDot { color: #a499fb; }
+.brandDivider { color: #57545e; margin: 0 2px 0 5px; font-size: 23px; font-weight: 300; }
+.workspaceLabel { font-size: 12px; color: #9b97a7; letter-spacing: -.1px; }
+
+.nav { display: flex; gap: 3px; align-items: center; min-width: 0; }
+
+.navLink {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-height: 38px;
+  padding: 0 12px;
+  border-radius: 10px;
+  font-size: 12px;
+  font-weight: 450;
+  color: #a39fad;
+  white-space: nowrap;
+  border: 1px solid transparent;
+  transition: background 160ms, color 160ms, border-color 160ms;
+}
+
+.navLink:hover { color: #faf9ff; background: #ffffff07; }
+.navLink.active { color: #f0ebff; border-color: #ffffff14; background: #302d3d; }
+.navLink.active svg { color: #b4a6ff; }
+
+.headerActions { display: flex; align-items: center; gap: 15px; flex-shrink: 0; }
+.viewStore { display: inline-flex; align-items: center; gap: 7px; color: #c1bdcb; font-size: 12px; white-space: nowrap; transition: color 160ms; }
+.viewStore:hover { color: #fff; }
+.signOut { display: grid; place-items: center; width: 34px; height: 34px; color: #a6a1b0; border-radius: 10px; transition: background 160ms, color 160ms; }
+.signOut:hover { background: #ffffff09; color: #f5a7b8; }
+.avatar { display: grid; place-items: center; width: 34px; height: 34px; border: 1px solid #ffffff1a; border-radius: 50%; background: linear-gradient(135deg, #544365, #302b3e); color: #e8ddf3; font-size: 10px; font-weight: 600; letter-spacing: .2px; }
+
+.content { max-width: 1500px; width: 100%; margin: 0 auto; padding: 30px 28px 34px; }
+
+/* Keep existing management screens readable within the new dark workspace. */
+.legacyContent h1 { font-size: 30px; text-transform: none; letter-spacing: -1px; }
+.legacyContent :global(.admin-card),
+.legacyContent :global(.admin-table) {
+  background: #242329;
+  border-color: #ffffff1c;
+  border-radius: 20px;
+}
+.legacyContent :global(.admin-card):hover { background: #29272f; border-color: #ffffff24; }
+.legacyContent :global(.admin-table) { max-width: 100%; overflow-x: auto; }
+.legacyContent :global(.admin-table) th { background: #2d2b34; color: #b4adbf; letter-spacing: 1px; }
+.legacyContent :global(.admin-table) td { border-bottom-color: #ffffff0b; }
+.legacyContent :global(.admin-input) { background: #1c1b22; color: #e9e4f1; border-color: #ffffff24; }
+.legacyContent :global(.admin-input):focus { border-color: #a99ce2; box-shadow: 0 0 0 3px #a99ce21c; }
+.legacyContent :global(.admin-input) option { background: #242329; }
+.legacyContent [class~="text-white/15"],
+.legacyContent [class~="text-white/20"],
+.legacyContent [class~="text-white/25"],
+.legacyContent [class~="text-white/30"],
+.legacyContent [class~="text-white/40"] { color: #aaa3b6; }
+.legacyContent [class~="text-white/50"] { color: #bcb5c8; }
+
+.authPage {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 90px 20px 40px;
+  position: relative;
+  background:
+    radial-gradient(ellipse at 50% 12%, #6053aa1f, transparent 60%),
+    #131316;
+}
+
+.authBrand { position: absolute; left: 32px; top: 28px; display: flex; align-items: center; gap: 10px; color: #e9e5f2; font-size: 28px; letter-spacing: -1.4px; font-weight: 600; }
+.authBrand svg { color: #b8a4e2; }
+.authCard { width: 100%; max-width: 420px; padding: 38px; border: 1px solid #ffffff1c; border-radius: 26px; background: linear-gradient(135deg, #2c2934d9, #202026e6); box-shadow: inset 0 1px #ffffff0b, 0 25px 80px #00000038; backdrop-filter: blur(20px); }
+.lockIcon { display: grid; place-items: center; width: 52px; height: 52px; border-radius: 16px; background: #b2a1ff14; border: 1px solid #b2a1ff2b; color: #baaff8; margin-bottom: 28px; }
+.eyebrow { font-size: 9px; font-weight: 500; letter-spacing: 1.8px; color: #9d97b1; margin: 0 0 12px; }
+.authCard h1 { color: #f7f5fa; font-size: 33px; font-weight: 400; line-height: 1.15; letter-spacing: -1.5px; margin: 0; }
+.authCard h1 span { color: #b39bf4; }
+.authDescription { margin: 12px 0 30px; color: #b0aaba; font-size: 13px; line-height: 1.65; }
+.authForm { display: flex; flex-direction: column; }
+.authForm label { font-size: 12px; color: #d5cedd; margin-bottom: 9px; }
+.inputWrap { display: flex; align-items: center; gap: 11px; padding: 0 14px; border: 1px solid #ffffff1c; border-radius: 12px; background: #15141d66; color: #8e859f; transition: border-color 160ms; }
+.inputWrap:focus-within { border-color: #a998e6; }
+.inputWrap input { width: 100%; min-width: 0; min-height: 47px; background: transparent; border: none; color: #f5f0fb; font-size: 13px; outline: none; }
+.inputWrap input:focus-visible { outline: none; }
+.inputWrap input::placeholder { color: #8e889b; }
+.signIn { min-height: 48px; display: flex; align-items: center; justify-content: center; gap: 12px; margin-top: 18px; border-radius: 12px; border: 1px solid #b9a9ff5e; background: #7660d4; color: #fff; font-size: 13px; font-weight: 500; transition: background 160ms; }
+.signIn:hover { background: #856ee3; }
+.signIn:disabled { opacity: .6; cursor: wait; }
+.error { margin: 11px 0 0; color: #ff9ebb; font-size: 12px; line-height: 1.6; }
+.backToStore { display: flex; align-items: center; justify-content: center; gap: 7px; margin-top: 26px; font-size: 12px; color: #aca4bb; transition: color 160ms; }
+.backToStore:hover { color: #f2ecff; }
+.authFooter { color: #92899f; font-size: 11px; margin-top: 28px; }
+.loading { display: grid; justify-items: center; gap: 16px; color: #aca3c4; font-size: 12px; }
+.spinner { animation: spin 900ms linear infinite; }
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+@media (max-width: 1200px) {
+  .headerInner { flex-wrap: wrap; gap: 0 20px; padding-top: 16px; }
+  .nav { order: 3; width: 100%; overflow-x: auto; padding: 13px 0 12px; gap: 5px; scrollbar-width: thin; scrollbar-color: #554c67 transparent; }
+  .navLink { flex-shrink: 0; }
+}
+
+@media (max-width: 600px) {
+  .headerInner { padding: 15px 16px 0; }
+  .brand { gap: 7px; }
+  .brandName { font-size: 22px; }
+  .brandDivider, .workspaceLabel { display: none; }
+  .headerActions { gap: 8px; }
+  .viewStore { gap: 5px; font-size: 11px; }
+  .viewStore > svg:first-child { display: none; }
+  .avatar { display: none; }
+  .nav { gap: 3px; }
+  .navLink { min-height: 38px; padding: 0 11px; font-size: 11px; }
+  .content { padding: 24px 16px 28px; }
+  .authBrand { left: 22px; top: 23px; }
+  .authCard { padding: 28px 24px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .shell *, .shell *::before, .shell *::after { scroll-behavior: auto; transition: none; }
+  .spinner { animation-duration: 2000ms; }
+}
+
+/* Saved light/dark theme palettes */
+:global(html[data-theme="light"]) .shell{background:rgba(245,246,242,1);color:rgba(48,62,52,1);color-scheme:light}
+:global(html[data-theme="light"]) .header{border-bottom:1px solid rgba(200,207,196,0.047058823529411764);background:rgba(245,246,242,1)}
+:global(html[data-theme="light"]) .brand{color:rgba(48,62,52,1)}
+:global(html[data-theme="light"]) .brandIcon{border:1px solid rgba(200,207,196,0.09411764705882353);background:rgba(245,246,242,1);color:rgba(48,62,52,1)}
+:global(html[data-theme="light"]) .brandDot{color:rgba(48,62,52,1)}
+:global(html[data-theme="light"]) .workspaceLabel{color:rgba(48,62,52,1)}
+:global(html[data-theme="light"]) .navLink{color:rgba(48,62,52,1)}
+:global(html[data-theme="light"]) .navLink:hover{color:rgba(48,62,52,1)}
+:global(html[data-theme="light"]) .navLink.active{color:rgba(48,62,52,1);border-color:rgba(200,207,196,0.0784313725490196);background:rgba(245,246,242,1)}
+:global(html[data-theme="light"]) .navLink.active svg{color:rgba(48,62,52,1)}
+:global(html[data-theme="light"]) .viewStore{color:rgba(48,62,52,1)}
+:global(html[data-theme="light"]) .viewStore:hover{color:rgba(48,62,52,1)}
+:global(html[data-theme="light"]) .signOut{color:rgba(48,62,52,1)}
+:global(html[data-theme="light"]) .signOut:hover{color:rgba(48,62,52,1)}
+:global(html[data-theme="light"]) .avatar{border:1px solid rgba(200,207,196,0.10196078431372549);background:linear-gradient(135deg, rgba(245,246,242,1), rgba(245,246,242,1));color:rgba(48,62,52,1)}
+:global(html[data-theme="light"]) .legacyContent :global(.admin-card),:global(html[data-theme="light"]) .legacyContent :global(.admin-table){background:rgba(245,246,242,1);border-color:rgba(200,207,196,0.10980392156862745)}
+:global(html[data-theme="light"]) .legacyContent :global(.admin-card):hover{background:rgba(245,246,242,1);border-color:rgba(200,207,196,0.1411764705882353)}
+:global(html[data-theme="light"]) .legacyContent :global(.admin-table) th{background:rgba(245,246,242,1);color:rgba(48,62,52,1)}
+:global(html[data-theme="light"]) .legacyContent :global(.admin-table) td{border-bottom-color:rgba(200,207,196,0.043137254901960784)}
+:global(html[data-theme="light"]) .legacyContent :global(.admin-input){background:rgba(245,246,242,1);color:rgba(48,62,52,1);border-color:rgba(200,207,196,0.1411764705882353)}
+:global(html[data-theme="light"]) .legacyContent :global(.admin-input):focus{border-color:rgba(200,207,196,1)}
+:global(html[data-theme="light"]) .legacyContent :global(.admin-input) option{background:rgba(245,246,242,1)}
+:global(html[data-theme="light"]) .legacyContent [class~="text-white/15"],:global(html[data-theme="light"]) .legacyContent [class~="text-white/20"],:global(html[data-theme="light"]) .legacyContent [class~="text-white/25"],:global(html[data-theme="light"]) .legacyContent [class~="text-white/30"],:global(html[data-theme="light"]) .legacyContent [class~="text-white/40"]{color:rgba(48,62,52,1)}
+:global(html[data-theme="light"]) .legacyContent [class~="text-white/50"]{color:rgba(48,62,52,1)}
+:global(html[data-theme="light"]) .authPage{background:radial-gradient(ellipse at 50% 12%, rgba(245,246,242,0.12156862745098039), transparent 60%),
+    rgba(245,246,242,1)}
+:global(html[data-theme="light"]) .authBrand{color:rgba(48,62,52,1)}
+:global(html[data-theme="light"]) .authBrand svg{color:rgba(48,62,52,1)}
+:global(html[data-theme="light"]) .authCard{border:1px solid rgba(200,207,196,0.10980392156862745);background:linear-gradient(135deg, rgba(245,246,242,0.8509803921568627), rgba(245,246,242,0.9019607843137255))}
+:global(html[data-theme="light"]) .lockIcon{border:1px solid rgba(200,207,196,0.16862745098039217);color:rgba(48,62,52,1)}
+:global(html[data-theme="light"]) .eyebrow{color:rgba(48,62,52,1)}
+:global(html[data-theme="light"]) .authCard h1{color:rgba(48,62,52,1)}
+:global(html[data-theme="light"]) .authCard h1 span{color:rgba(48,62,52,1)}
+:global(html[data-theme="light"]) .authDescription{color:rgba(48,62,52,1)}
+:global(html[data-theme="light"]) .authForm label{color:rgba(48,62,52,1)}
+:global(html[data-theme="light"]) .inputWrap{border:1px solid rgba(200,207,196,0.10980392156862745);background:rgba(245,246,242,0.4)}
+:global(html[data-theme="light"]) .inputWrap:focus-within{border-color:rgba(200,207,196,1)}
+:global(html[data-theme="light"]) .inputWrap input{color:rgba(48,62,52,1)}
+:global(html[data-theme="light"]) .signIn{border:1px solid rgba(200,207,196,0.3686274509803922);background:rgba(245,246,242,1);color:rgba(48,62,52,1)}
+:global(html[data-theme="light"]) .error{color:rgba(48,62,52,1)}
+:global(html[data-theme="light"]) .backToStore{color:rgba(48,62,52,1)}
+:global(html[data-theme="light"]) .backToStore:hover{color:rgba(48,62,52,1)}
+:global(html[data-theme="light"]) .authFooter{color:rgba(48,62,52,1)}
+:global(html[data-theme="light"]) .loading{color:rgba(48,62,52,1)}
+:global(html[data-theme="dark"]) .header{border-bottom:1px solid rgba(73,85,75,0.047058823529411764)}
+:global(html[data-theme="dark"]) .brandIcon{border:1px solid rgba(73,85,75,0.09411764705882353)}
+:global(html[data-theme="dark"]) .brandDivider{color:rgba(231,236,227,1)}
+:global(html[data-theme="dark"]) .navLink:hover{background:rgba(29,35,31,0.027450980392156862)}
+:global(html[data-theme="dark"]) .navLink.active{border-color:rgba(73,85,75,0.0784313725490196)}
+:global(html[data-theme="dark"]) .signOut:hover{background:rgba(29,35,31,0.03529411764705882)}
+:global(html[data-theme="dark"]) .avatar{border:1px solid rgba(73,85,75,0.10196078431372549)}
+:global(html[data-theme="dark"]) .legacyContent :global(.admin-card),:global(html[data-theme="dark"]) .legacyContent :global(.admin-table){border-color:rgba(73,85,75,0.10980392156862745)}
+:global(html[data-theme="dark"]) .legacyContent :global(.admin-card):hover{border-color:rgba(73,85,75,0.1411764705882353)}
+:global(html[data-theme="dark"]) .legacyContent :global(.admin-table) td{border-bottom-color:rgba(73,85,75,0.043137254901960784)}
+:global(html[data-theme="dark"]) .legacyContent :global(.admin-input){border-color:rgba(73,85,75,0.1411764705882353)}
+:global(html[data-theme="dark"]) .legacyContent :global(.admin-input):focus{border-color:rgba(73,85,75,1)}
+:global(html[data-theme="dark"]) .authCard{border:1px solid rgba(73,85,75,0.10980392156862745)}
+:global(html[data-theme="dark"]) .lockIcon{background:rgba(29,35,31,0.0784313725490196);border:1px solid rgba(73,85,75,0.16862745098039217)}
+:global(html[data-theme="dark"]) .inputWrap{border:1px solid rgba(73,85,75,0.10980392156862745)}
+:global(html[data-theme="dark"]) .inputWrap:focus-within{border-color:rgba(73,85,75,1)}
+:global(html[data-theme="dark"]) .signIn{border:1px solid rgba(73,85,75,0.3686274509803922)}

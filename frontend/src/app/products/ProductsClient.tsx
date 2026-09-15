@@ -2,213 +2,274 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
-import { useSearchParams } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { ArrowRight, ArrowUpRight, Check, ChevronDown, ChevronRight, LayoutGrid, List, RotateCcw, Search, SlidersHorizontal, Sofa, X } from 'lucide-react';
+import { motion, useReducedMotion } from 'framer-motion';
+import { ensureLocalProductImages, sofaImageForCategory } from '@/lib/product-images';
 import { ProductCard, Spinner } from '@/components/ui';
+import { getProductPrice, type StoreProduct } from '@/lib/product-options';
 
-interface ProductVariant {
-  id: string;
-  range_type: string;
-  price: number;
-  stock: number;
-  color: string;
-}
+import CatalogueHero from '@/components/CatalogueHero';
+import { SOFA_CATEGORIES } from '@/lib/product-categories';
 
-interface Product {
-  id: string;
-  slug: string;
-  title: string;
-  description: string | null;
-  base_price: number;
-  images: string[];
-  category: string;
-  variants: ProductVariant[];
-}
-
-const CATEGORIES = ['All', '2-Seater', '3-Seater', 'Corner', 'Recliner'] as const;
-const FABRICS = ['All Fabrics', 'Velvet', 'Linen', 'Bouclé', 'Leather', 'Fabric'] as const;
-type SortOption = 'newest' | 'price-asc' | 'price-desc' | 'name-asc';
-
-const SORT_LABELS: Record<SortOption, string> = {
-  newest: 'Newest',
-  'price-asc': 'Price Low → High',
-  'price-desc': 'Price High → Low',
-  'name-asc': 'Name A → Z',
+const CATEGORIES = ['All', ...SOFA_CATEGORIES] as const;
+type Category = typeof CATEGORIES[number] | '2-Seater,3-Seater';
+const FABRICS = ['All fabrics', 'Velvet', 'Linen', 'Bouclé', 'Leather', 'Fabric'] as const;
+const FABRIC_KEYWORDS: Record<string, string[]> = {
+  Velvet: ['velvet'],
+  Linen: ['linen'],
+  'Bouclé': ['bouclé', 'boucle'],
+  Leather: ['leather', 'chesterfield'],
+  Fabric: ['fabric'],
 };
-
-const MOCK_PRODUCTS: Product[] = [
-  { id: 'a1000000-0000-0000-0000-000000000001', slug: 'chesterfield-2-seater', title: 'Chesterfield 2-Seater Sofa', description: 'Classic deep buttoned Chesterfield in genuine leather.', base_price: 2199.00, images: ['https://images.unsplash.com/photo-1540574163026-643ea20d5d5d?auto=format&fit=crop&q=80&w=800'], category: '2-Seater', variants: [{ id: 'v1', range_type: '2-Seater', price: 2199.00, stock: 3, color: 'Cognac' }] },
-  { id: 'a1000000-0000-0000-0000-000000000002', slug: 'velvet-2-seater', title: 'Velvet 2-Seater Sofa', description: 'Plush velvet upholstery with slim oak legs.', base_price: 1799.00, images: ['https://images.unsplash.com/photo-1555041469-a586c61ea9bc?auto=format&fit=crop&q=80&w=800'], category: '2-Seater', variants: [{ id: 'v2', range_type: '2-Seater', price: 1799.00, stock: 5, color: 'Bourneville' }] },
-  { id: 'a1000000-0000-0000-0000-000000000003', slug: 'linen-2-seater', title: 'Linen 2-Seater Sofa', description: 'Relaxed linen blend with feather-filled cushions.', base_price: 1499.00, images: ['https://images.unsplash.com/photo-1493663284031-b7e3aefcae8e?auto=format&fit=crop&q=80&w=800'], category: '2-Seater', variants: [{ id: 'v3', range_type: '2-Seater', price: 1499.00, stock: 7, color: 'Mushroom' }] },
-  { id: 'a1000000-0000-0000-0000-000000000004', slug: 'velvet-3-seater', title: 'Velvet 3-Seater Sofa', description: 'Luxurious velvet 3-seater with deep seat.', base_price: 2499.00, images: ['https://images.unsplash.com/photo-1555041469-a586c61ea9bc?auto=format&fit=crop&q=80&w=800'], category: '3-Seater', variants: [{ id: 'v4', range_type: '3-Seater', price: 2499.00, stock: 3, color: 'Charcoal' }] },
-  { id: 'a1000000-0000-0000-0000-000000000005', slug: 'boucle-3-seater', title: 'Bouclé 3-Seater Sofa', description: 'Trendy bouclé fabric with cloud-like comfort.', base_price: 2899.00, images: ['https://images.unsplash.com/photo-1493663284031-b7e3aefcae8e?auto=format&fit=crop&q=80&w=800'], category: '3-Seater', variants: [{ id: 'v5', range_type: '3-Seater', price: 2899.00, stock: 3, color: 'Cream' }] },
-  { id: 'a1000000-0000-0000-0000-000000000006', slug: 'leather-3-seater', title: 'Leather 3-Seater Sofa', description: 'Premium aniline leather with natural patina.', base_price: 2799.00, images: ['https://images.unsplash.com/photo-1540574163026-643ea20d5d5d?auto=format&fit=crop&q=80&w=800'], category: '3-Seater', variants: [{ id: 'v6', range_type: '3-Seater', price: 2799.00, stock: 2, color: 'Cognac' }] },
-  { id: 'a1000000-0000-0000-0000-000000000007', slug: 'velvet-corner-left', title: 'Velvet Corner Sofa — Left Facing', description: 'Generous L-shaped corner in premium velvet.', base_price: 3299.00, images: ['https://images.unsplash.com/photo-1493663284031-b7e3aefcae8e?auto=format&fit=crop&q=80&w=800'], category: 'Corner', variants: [{ id: 'v7', range_type: 'Left Facing', price: 3299.00, stock: 2, color: 'Bourneville' }] },
-  { id: 'a1000000-0000-0000-0000-000000000008', slug: 'velvet-corner-right', title: 'Velvet Corner Sofa — Right Facing', description: 'Mirror of our best-selling left-facing corner.', base_price: 3299.00, images: ['https://images.unsplash.com/photo-1512212621149-107ffe572d2f?auto=format&fit=crop&q=80&w=800'], category: 'Corner', variants: [{ id: 'v8', range_type: 'Right Facing', price: 3299.00, stock: 4, color: 'Charcoal' }] },
-  { id: 'a1000000-0000-0000-0000-000000000009', slug: 'leather-corner', title: 'Leather Corner Sofa', description: 'Statement corner in full-grain leather.', base_price: 3599.00, images: ['https://images.unsplash.com/photo-1540574163026-643ea20d5d5d?auto=format&fit=crop&q=80&w=800'], category: 'Corner', variants: [{ id: 'v9', range_type: 'Corner', price: 3599.00, stock: 1, color: 'Cognac' }] },
-  { id: 'a1000000-0000-0000-0000-000000000010', slug: 'velvet-recliner-pair', title: 'Velvet Recliner Pair', description: 'Set of 2 electric recliners in soft velvet.', base_price: 2999.00, images: ['https://images.unsplash.com/photo-1512212621149-107ffe572d2f?auto=format&fit=crop&q=80&w=800'], category: 'Recliner', variants: [{ id: 'v10', range_type: 'Recliner Pair', price: 2999.00, stock: 3, color: 'Bourneville' }] },
-  { id: 'a1000000-0000-0000-0000-000000000011', slug: 'leather-recliner', title: 'Leather Recliner Sofa', description: 'Manual recliner in durable bonded leather.', base_price: 2299.00, images: ['https://images.unsplash.com/photo-1540574163026-643ea20d5d5d?auto=format&fit=crop&q=80&w=800'], category: 'Recliner', variants: [{ id: 'v11', range_type: 'Recliner', price: 2299.00, stock: 4, color: 'Cognac' }] },
-  { id: 'a1000000-0000-0000-0000-000000000012', slug: 'fabric-recliner-pair', title: 'Fabric Recliner Pair', description: 'Set of 2 manual recliners in easy-clean fabric.', base_price: 1799.00, images: ['https://images.unsplash.com/photo-1555041469-a586c61ea9bc?auto=format&fit=crop&q=80&w=800'], category: 'Recliner', variants: [{ id: 'v12', range_type: 'Recliner Pair', price: 1799.00, stock: 5, color: 'Light Grey' }] },
-];
+type SortOption = 'newest' | 'price-asc' | 'price-desc' | 'name-asc';
+const SORT_LABELS: Record<SortOption, string> = {
+  newest: 'Recommended',
+  'price-asc': 'Price: low to high',
+  'price-desc': 'Price: high to low',
+  'name-asc': 'Name: A to Z',
+};
+const CATEGORY_COPY: Record<Category, string> = {
+  All: 'Find your kind of comfort.',
+  '2-Seater,3-Seater': 'Good company. Great comfort.',
+  '2-Seater': 'Small space. Big comfort.',
+  '3-Seater': 'A little more room to unwind.',
+  Corner: 'Bring everyone together.',
+  'U-Shape': 'Room for everyone to relax.',
+  'Sofa Bed': 'A comfortable seat. A welcoming bed.',
+  Recliner: 'Put your feet up. Settle in.',
+};
+const normaliseCategory = (value: string | null): Category => {
+  if (value === '2-Seater,3-Seater' || value === '3-Seater,2-Seater') return '2-Seater,3-Seater';
+  return CATEGORIES.includes(value as typeof CATEGORIES[number]) ? value as Category : 'All';
+};
+const formatPrice = (value: number) => new Intl.NumberFormat('en-GB', { style: 'currency', currency: 'GBP', maximumFractionDigits: value % 1 === 0 ? 0 : 2 }).format(value);
 
 export default function ProductsClient() {
   const searchParams = useSearchParams();
-  const initialCategory = searchParams.get('category') || 'All';
-
-  const [products, setProducts] = useState<Product[]>([]);
+  const router = useRouter();
+  const reduceMotion = useReducedMotion();
+  const [products, setProducts] = useState<StoreProduct[]>([]);
   const [loading, setLoading] = useState(true);
-  const [category, setCategory] = useState<string>(initialCategory);
-  const [fabric, setFabric] = useState<string>('All Fabrics');
+  const [loadError, setLoadError] = useState(false);
+  const [reloadKey, setReloadKey] = useState(0);
+  const [category, setCategory] = useState<Category>(normaliseCategory(searchParams.get('category')));
+  const [query, setQuery] = useState(searchParams.get('q') || '');
+  const [fabric, setFabric] = useState<string>('All fabrics');
   const [sortBy, setSortBy] = useState<SortOption>('newest');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
-  const [priceRange, setPriceRange] = useState<[number, number]>([0, 5000]);
+  const [maxPrice, setMaxPrice] = useState<number | null>(null);
+  const [filtersOpen, setFiltersOpen] = useState(false);
+  const categoryLabel = category === 'All' ? 'All sofas' : category === '2-Seater,3-Seater' ? '2 & 3 seater sofas' : `${category} sofas`;
 
   useEffect(() => {
-    async function fetchProducts() {
+    setCategory(normaliseCategory(searchParams.get('category')));
+    setQuery(searchParams.get('q') || '');
+  }, [searchParams]);
+
+  useEffect(() => {
+    let active = true;
+    let controller: AbortController | null = null;
+
+    async function fetchProducts(showLoader = false) {
+      controller?.abort();
+      controller = new AbortController();
+      const requestController = controller;
+      if (showLoader) setLoading(true);
       try {
-        const res = await fetch('/api/products');
-        if (res.ok) {
-          const data = await res.json();
-          if (data.length > 0) { setProducts(data); setLoading(false); return; }
+        const res = await fetch('/api/products/', { cache: 'no-store', signal: requestController.signal });
+        if (!res.ok) throw new Error('Unable to load products');
+        const data = await res.json();
+        if (!Array.isArray(data)) throw new Error('Invalid catalogue response');
+        if (active && !requestController.signal.aborted) {
+          setProducts(data.map(ensureLocalProductImages));
+          setLoadError(false);
+          setLoading(false);
         }
-      } catch { /* fall through */ }
-      setProducts(MOCK_PRODUCTS);
-      setLoading(false);
+      } catch {
+        if (active && !requestController.signal.aborted) {
+          setLoadError(true);
+          setLoading(false);
+        }
+      }
     }
-    fetchProducts();
-  }, []);
 
-  const FABRIC_KEYWORDS: Record<string, string[]> = {
-    Velvet: ['velvet'],
-    Linen: ['linen'],
-    'Bouclé': ['bouclé', 'boucle'],
-    Leather: ['leather', 'chesterfield'],
-    Fabric: ['fabric'],
-  };
+    fetchProducts(true);
+    const refresh = () => fetchProducts();
+    const channel = typeof BroadcastChannel !== 'undefined' ? new BroadcastChannel('corner-sofa-products') : null;
+    channel?.addEventListener('message', refresh);
+    window.addEventListener('focus', refresh);
+    return () => {
+      active = false;
+      controller?.abort();
+      channel?.close();
+      window.removeEventListener('focus', refresh);
+    };
+  }, [reloadKey]);
 
+  const priceCeiling = useMemo(() => Math.max(5000, ...products.map((product) => Math.ceil(getProductPrice(product) / 100) * 100)), [products]);
+  const activeFilterCount = Number(category !== 'All') + Number(fabric !== 'All fabrics') + Number(maxPrice !== null) + Number(query.trim().length > 0);
   const filtered = useMemo(() => {
-    let result = [...products];
-    if (category !== 'All') result = result.filter((p) => p.category === category);
-    if (fabric !== 'All Fabrics') {
-      const keywords = FABRIC_KEYWORDS[fabric] || [];
-      result = result.filter((p) => keywords.some((k) => p.title.toLowerCase().includes(k) || p.description?.toLowerCase().includes(k)));
-    }
-    result = result.filter((p) => p.base_price >= priceRange[0] && p.base_price <= priceRange[1]);
+    const search = query.trim().toLowerCase();
+    let result = products.filter((product) => {
+      if (category !== 'All' && !category.split(',').includes(product.category)) return false;
+      if (maxPrice !== null && getProductPrice(product) > maxPrice) return false;
+      const productText = `${product.title} ${product.description || ''} ${product.category} ${product.variants?.map((variant) => variant.color).join(' ') || ''}`.toLowerCase();
+      if (search && !productText.includes(search)) return false;
+      if (fabric !== 'All fabrics' && !(FABRIC_KEYWORDS[fabric] || []).some((keyword) => productText.includes(keyword))) return false;
+      return true;
+    });
     switch (sortBy) {
-      case 'price-asc': result.sort((a, b) => a.base_price - b.base_price); break;
-      case 'price-desc': result.sort((a, b) => b.base_price - a.base_price); break;
-      case 'name-asc': result.sort((a, b) => a.title.localeCompare(b.title)); break;
+      case 'price-asc': result = result.sort((a, b) => getProductPrice(a) - getProductPrice(b)); break;
+      case 'price-desc': result = result.sort((a, b) => getProductPrice(b) - getProductPrice(a)); break;
+      case 'name-asc': result = result.sort((a, b) => a.title.localeCompare(b.title)); break;
     }
     return result;
-  }, [products, category, fabric, sortBy, priceRange]);
+  }, [products, category, fabric, sortBy, maxPrice, query]);
 
-  const formatPrice = (n: number) => n.toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  function updateUrl(nextCategory: Category, nextQuery: string) {
+    const params = new URLSearchParams(searchParams.toString());
+    if (nextCategory === 'All') params.delete('category');
+    else params.set('category', nextCategory);
+    if (nextQuery.trim()) params.set('q', nextQuery.trim());
+    else params.delete('q');
+    const nextSearch = params.toString();
+    router.replace(`/products${nextSearch ? `?${nextSearch}` : ''}`, { scroll: false });
+  }
+
+  function chooseCategory(nextCategory: Category) {
+    setCategory(nextCategory);
+    updateUrl(nextCategory, query);
+  }
+
+  function resetFilters() {
+    setCategory('All');
+    setFabric('All fabrics');
+    setMaxPrice(null);
+    setQuery('');
+    setSortBy('newest');
+    updateUrl('All', '');
+  }
 
   return (
-    <div className="bg-primary min-h-screen relative">
-      <div className="bg-orb bg-orb-accent w-[500px] h-[500px] -top-40 -right-40 absolute pointer-events-none" />
-      <div className="bg-orb bg-orb-gold w-[400px] h-[400px] top-[60%] -left-40 absolute pointer-events-none" />
+    <div className="min-h-screen bg-[#101310] text-[#26352e]">
+      <CatalogueHero title={CATEGORY_COPY[category]} categoryLabel={categoryLabel} category={category} query={query} />
 
-      <section className="py-20 glass-white border-b border-white/20 relative z-10">
-        <div className="max-w-7xl mx-auto px-6 text-center">
-          <h1 className="text-3xl md:text-5xl font-light tracking-[0.15em] text-dark uppercase mb-4">
-            {category !== 'All' ? `${category} Collection` : 'Our Collection'}
-          </h1>
-          <div className="glass-divider max-w-[120px] mx-auto mb-4" />
-          <p className="text-xs tracking-[0.2em] text-dark/50 uppercase font-medium">
-            Handmade in the UK — Free delivery on all orders
-          </p>
+      <section id="collection" aria-label="Shop sofas" className="catalogue-full-width w-full scroll-mt-28 px-3 py-9 sm:px-5 lg:px-5 lg:py-12">
+        <div className="mb-8 flex gap-2 overflow-x-auto pb-2" aria-label="Sofa categories">
+          {CATEGORIES.map((item) => (
+            <button key={item} type="button" onClick={() => chooseCategory(item)} aria-pressed={category.split(',').includes(item)} className={`shrink-0 rounded-full border px-5 py-3 text-sm font-medium transition-all ${category.split(',').includes(item) ? 'border-[#26352e] bg-[#26352e] text-white shadow-sm' : 'border-[#e1e3da] bg-white/70 text-[#687160] hover:border-[#899480] hover:text-[#26352e]'}`}>
+              {item === 'All' ? 'All sofas' : `${item} sofas`}
+            </button>
+          ))}
+        </div>
+        <div className="catalogue-category-shortcuts" aria-label="More sofa categories">
+          <Link href="/products?category=U-Shape">U-shape sofas <ArrowUpRight size={14} aria-hidden="true" /></Link>
+          <Link href="/products?category=Recliner&q=electric">Electric recliners <ArrowUpRight size={14} aria-hidden="true" /></Link>
+          <Link href="/products?category=Recliner&q=manual">Manual recliners <ArrowUpRight size={14} aria-hidden="true" /></Link>
+        </div>
+
+        <div className="grid gap-6 lg:grid-cols-[220px_minmax(0,1fr)] lg:gap-6">
+          <aside className="catalogue-sidebar self-start lg:sticky lg:top-32">
+            <button type="button" onClick={() => setFiltersOpen(!filtersOpen)} aria-expanded={filtersOpen} aria-controls="catalogue-filters" className="flex w-full items-center justify-between rounded-xl border border-[#e1e3da] bg-white/70 p-4 text-sm font-medium lg:hidden">
+              <span className="flex items-center gap-2"><SlidersHorizontal size={17} />Filters {activeFilterCount > 0 && <span className="flex h-5 w-5 items-center justify-center rounded-full bg-[#26352e] text-[10px] text-white">{activeFilterCount}</span>}</span>
+              <ChevronDown size={16} className={`transition-transform ${filtersOpen ? 'rotate-180' : ''}`} />
+            </button>
+            <div id="catalogue-filters" className={`${filtersOpen ? 'block' : 'hidden'} rounded-2xl border border-[#e6e6df] bg-white/55 p-5 lg:block`}>
+              <div className="mb-5 flex items-center justify-between">
+                <h2 className="flex items-center gap-2 text-sm font-medium"><SlidersHorizontal size={16} aria-hidden="true" />Refine your search</h2>
+              </div>
+              <fieldset className="border-t border-[#e6e6df] py-5">
+                <legend className="sr-only">Upholstery</legend>
+                <p className="mb-4 text-xs font-medium uppercase tracking-[0.12em] text-[#65745d]">Upholstery</p>
+                <div className="space-y-3">
+                  {FABRICS.map((item) => (
+                    <label key={item} className="flex cursor-pointer items-center gap-3 text-sm text-[#626e5d]">
+                      <input type="radio" name="fabric" value={item} checked={fabric === item} onChange={() => setFabric(item)} className="peer sr-only" />
+                      <span className={`flex h-[18px] w-[18px] items-center justify-center rounded-md border transition-colors peer-focus-visible:ring-2 peer-focus-visible:ring-[#65745d] peer-focus-visible:ring-offset-2 ${fabric === item ? 'border-[#65745d] bg-[#65745d] text-white' : 'border-[#d3d7cb] bg-white'}`}>{fabric === item && <Check size={12} strokeWidth={2.5} aria-hidden="true" />}</span>
+                      {item}
+                    </label>
+                  ))}
+                </div>
+              </fieldset>
+              <div className="border-t border-[#e6e6df] py-5">
+                <label htmlFor="max-price" className="mb-4 block text-xs font-medium uppercase tracking-[0.12em] text-[#65745d]">Your budget</label>
+                <p className="mb-4 text-sm font-medium">{maxPrice === null ? 'Any price' : `Up to ${formatPrice(maxPrice)}`}</p>
+                <input id="max-price" type="range" min={0} max={priceCeiling} step={100} value={maxPrice ?? priceCeiling} onChange={(event) => { const value = Number(event.target.value); setMaxPrice(value === priceCeiling ? null : value); }} aria-valuetext={maxPrice === null ? 'Any price' : `Up to ${formatPrice(maxPrice)}`} className="h-1.5 w-full cursor-pointer accent-[#65745d]" />
+                <div className="mt-2 flex justify-between text-[11px] text-[#77806e]"><span>£0</span><span>{formatPrice(priceCeiling)}+</span></div>
+              </div>
+              <button type="button" onClick={resetFilters} className="flex w-full items-center justify-center gap-2 rounded-xl border border-[#dde1d5] px-3 py-3 text-xs font-medium transition-colors hover:bg-[#f0f2eb]"><RotateCcw size={13} aria-hidden="true" />Reset all filters</button>
+            </div>
+            <div className="mt-5 hidden rounded-2xl bg-[#e9ede2] p-5 lg:block">
+              <Sofa size={25} strokeWidth={1.4} aria-hidden="true" />
+              <p className="mt-3 text-sm font-medium">A little help choosing?</p>
+              <p className="mt-2 text-xs leading-relaxed text-[#65715d]">Let’s find the right fit for your space, style and everyday life.</p>
+              <Link href="/contact" className="mt-4 inline-flex items-center gap-2 text-xs font-medium underline decoration-[#65745d]/40 underline-offset-4">Talk to our team <ArrowUpRight size={14} aria-hidden="true" /></Link>
+            </div>
+          </aside>
+
+          <div className="min-w-0">
+            <div className="catalogue-toolbar mb-5 flex flex-wrap items-center justify-between gap-4">
+              <form onSubmit={(event) => { event.preventDefault(); updateUrl(category, query); }} role="search" className="relative min-w-0 flex-1 basis-[220px]">
+                <label htmlFor="catalogue-search" className="sr-only">Search sofas</label>
+                <Search size={17} className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-[#7a8371]" aria-hidden="true" />
+                <input id="catalogue-search" type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search sofas, fabrics or colours" className="w-full rounded-xl border border-[#e1e3da] bg-white/70 py-3 pl-11 pr-4 text-sm outline-none transition-colors placeholder:text-[#8a9082] focus:border-[#65745d] focus:ring-2 focus:ring-[#65745d]/10" />
+              </form>
+              <div className="flex flex-wrap items-center gap-3">
+                <label htmlFor="product-sort" className="sr-only">Sort products</label>
+                <select id="product-sort" value={sortBy} onChange={(event) => setSortBy(event.target.value as SortOption)} className="max-w-[200px] rounded-xl border border-[#e1e3da] bg-white/70 px-3 py-3 text-xs text-[#57634f] outline-none focus:border-[#65745d] focus:ring-2 focus:ring-[#65745d]/10">
+                  {(Object.entries(SORT_LABELS) as [SortOption, string][]).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
+                </select>
+                <div className="flex rounded-xl border border-[#e1e3da] bg-white/70 p-1" role="group" aria-label="Product display">
+                  <button type="button" onClick={() => setViewMode('grid')} aria-label="Grid view" aria-pressed={viewMode === 'grid'} className={`rounded-lg p-2 transition-colors ${viewMode === 'grid' ? 'bg-[#26352e] text-white' : 'text-[#7d8475] hover:bg-[#eceee6]'}`}><LayoutGrid size={16} aria-hidden="true" /></button>
+                  <button type="button" onClick={() => setViewMode('list')} aria-label="List view" aria-pressed={viewMode === 'list'} className={`rounded-lg p-2 transition-colors ${viewMode === 'list' ? 'bg-[#26352e] text-white' : 'text-[#7d8475] hover:bg-[#eceee6]'}`}><List size={16} aria-hidden="true" /></button>
+                </div>
+              </div>
+            </div>
+
+            <div className="catalogue-result-count mb-6 flex flex-wrap items-center justify-between gap-3">
+              <p className="text-xs text-[#78806f]" role="status" aria-live="polite">{loading ? 'Finding your next favourite seat…' : `${filtered.length} sofa${filtered.length === 1 ? '' : 's'} to make yourself at home`}</p>
+              {activeFilterCount > 0 && <button type="button" onClick={resetFilters} className="inline-flex items-center gap-1.5 text-xs text-[#65745d] underline underline-offset-4">Clear all filters <X size={12} aria-hidden="true" /></button>}
+            </div>
+
+            {loadError && products.length > 0 && <div role="status" className="mb-5 flex flex-wrap items-center justify-between gap-2 rounded-xl border border-[#e1d6bd] bg-[#f8f4e9] p-4 text-xs text-[#746343]">We could not refresh the collection. Your last results are shown.<button onClick={() => setReloadKey((key) => key + 1)} className="font-medium underline underline-offset-4">Try again</button></div>}
+            {loading ? (
+              <div className="flex min-h-[400px] items-center justify-center"><Spinner label="Loading sofas..." /></div>
+            ) : loadError && products.length === 0 ? (
+              <div className="rounded-2xl border border-[#e6e6df] bg-white/60 px-6 py-20 text-center" role="alert">
+                <Sofa size={32} strokeWidth={1.3} className="mx-auto mb-5 text-[#65745d]" aria-hidden="true" />
+                <h2 className="text-xl font-medium tracking-tight">Our collection is taking a moment.</h2>
+                <p className="mt-3 text-sm text-[#747d6b]">We couldn’t load the sofas. Please try again.</p>
+                <button type="button" onClick={() => setReloadKey((key) => key + 1)} className="mt-6 inline-flex items-center gap-2 rounded-full bg-[#26352e] px-6 py-3 text-sm text-white transition-colors hover:bg-[#465841]"><RotateCcw size={15} aria-hidden="true" />Try again</button>
+              </div>
+            ) : filtered.length === 0 ? (
+              <div className="rounded-2xl border border-[#e6e6df] bg-white/60 px-6 py-20 text-center">
+                <Search size={30} strokeWidth={1.4} className="mx-auto mb-5 text-[#65745d]" aria-hidden="true" />
+                <h2 className="text-xl font-medium tracking-tight">No sofas found just yet.</h2>
+                <p className="mx-auto mt-3 max-w-sm text-sm leading-relaxed text-[#747d6b]">Try another search or give your filters a little more room.</p>
+                <button type="button" onClick={resetFilters} className="mt-6 inline-flex items-center gap-2 rounded-full bg-[#26352e] px-6 py-3 text-sm text-white transition-colors hover:bg-[#465841]">Explore all sofas <ArrowRight size={15} aria-hidden="true" /></button>
+              </div>
+            ) : (
+              <div className={viewMode === 'grid' ? 'catalogue-sofa-grid grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-4' : 'space-y-5'}>
+                {filtered.map((product) => (
+                  <ProductCard
+                    key={product.id}
+                    id={product.id}
+                    title={product.title}
+                    category={product.category}
+                    image={product.images[0] || '/placeholder.svg'}
+                    newPrice={getProductPrice(product)}
+                    oldPrice={product.compare_at_price}
+                    variants={product.variants}
+                    layout={viewMode}
+                    description={product.description}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       </section>
-
-      <div className="max-w-7xl mx-auto px-6 py-8 relative z-10">
-        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-8 pb-6 border-b border-dark/5">
-          <div className="flex flex-wrap gap-2">
-            {CATEGORIES.map((cat) => (
-              <button key={cat} onClick={() => setCategory(cat)}
-                className={`px-5 py-2 rounded-full text-xs uppercase tracking-[0.15em] font-medium transition-all duration-300 ${category === cat ? 'glass-btn text-white shadow-glow' : 'glass-card text-dark/60 hover:text-dark'}`}>
-                {cat}
-              </button>
-            ))}
-          </div>
-          <div className="flex flex-wrap gap-2">
-            {FABRICS.map((f) => (
-              <button key={f} onClick={() => setFabric(f)}
-                className={`px-4 py-1.5 rounded-full text-[10px] uppercase tracking-[0.15em] font-medium transition-all duration-300 ${fabric === f ? 'glass-btn text-white' : 'glass-card text-dark/50 hover:text-dark'}`}>
-                {f}
-              </button>
-            ))}
-          </div>
-          <div className="flex items-center gap-3">
-            <label className="text-[10px] text-dark/40 uppercase tracking-widest">Price:</label>
-            <input type="range" min={0} max={5000} step={100} value={priceRange[1]}
-              onChange={(e) => setPriceRange([0, parseInt(e.target.value)])}
-              className="w-32 accent-accent" />
-            <span className="text-xs text-dark/50">Up to £{priceRange[1].toLocaleString()}</span>
-          </div>
-          <div className="flex items-center gap-3">
-            <select value={sortBy} onChange={(e) => setSortBy(e.target.value as SortOption)}
-              className="px-4 py-2 glass-input rounded-xl text-xs uppercase tracking-widest text-dark focus:outline-none focus:ring-2 focus:ring-accent/20">
-              {(Object.entries(SORT_LABELS) as [SortOption, string][]).map(([v, l]) => (
-                <option key={v} value={v}>{l}</option>
-              ))}
-            </select>
-            <div className="flex glass-card rounded-xl overflow-hidden p-0.5">
-              <button onClick={() => setViewMode('grid')} className={`p-2 rounded-lg transition-all ${viewMode === 'grid' ? 'glass-btn text-white' : 'text-dark/40 hover:text-dark'}`} aria-label="Grid view">
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" /></svg>
-              </button>
-              <button onClick={() => setViewMode('list')} className={`p-2 rounded-lg transition-all ${viewMode === 'list' ? 'glass-btn text-white' : 'text-dark/40 hover:text-dark'}`} aria-label="List view">
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16" /></svg>
-              </button>
-            </div>
-          </div>
-        </div>
-
-        <div className="flex items-center justify-between mb-6">
-          <p className="text-xs text-dark/40 tracking-[0.2em] uppercase">
-            Showing {filtered.length} product{filtered.length !== 1 ? 's' : ''}
-          </p>
-          {category !== 'All' && (
-            <button onClick={() => setCategory('All')} className="text-xs text-accent hover:underline tracking-wide">Clear filter</button>
-          )}
-        </div>
-
-        {loading ? (
-          <div className="py-32 flex justify-center"><Spinner label="Loading products..." /></div>
-        ) : filtered.length === 0 ? (
-          <div className="py-32 text-center">
-            <div className="glass-white rounded-2xl p-12 max-w-md mx-auto">
-              <p className="text-dark/40 tracking-[0.2em] uppercase text-sm mb-4">No products found</p>
-              <button onClick={() => setCategory('All')} className="glass-btn text-white px-6 py-2 rounded-full text-xs uppercase tracking-widest">View all products</button>
-            </div>
-          </div>
-        ) : viewMode === 'grid' ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 gap-y-10">
-            {filtered.map((p) => (
-              <ProductCard key={p.id} id={p.id} title={p.title} image={p.images[0]} newPrice={p.base_price} oldPrice={p.base_price * 1.35} saveAmount={p.base_price * 0.35} />
-            ))}
-          </div>
-        ) : (
-          <div className="space-y-4">
-            {filtered.map((p) => (
-              <Link key={p.id} href={`/product/${p.id}`} className="flex gap-6 p-5 glass-card rounded-2xl">
-                <div className="w-48 h-48 flex-shrink-0 overflow-hidden rounded-xl bg-gray-50">
-                  <img src={p.images[0]} alt={p.title} className="w-full h-full object-cover" />
-                </div>
-                <div className="flex flex-col justify-center">
-                  <p className="text-[10px] text-dark/40 tracking-[0.2em] uppercase mb-1">{p.category}</p>
-                  <h3 className="text-lg font-light tracking-[0.1em] text-dark uppercase mb-2">{p.title}</h3>
-                  <p className="text-sm text-dark/50 mb-3 line-clamp-2">{p.description}</p>
-                  <div className="flex items-center gap-3">
-                    <span className="text-accent font-bold">£{formatPrice(p.base_price)}</span>
-                    <span className="text-xs text-dark/30 line-through">£{formatPrice(p.base_price * 1.35)}</span>
-                    <span className="text-xs text-red-500 font-medium">Save £{formatPrice(p.base_price * 0.35)}</span>
-                  </div>
-                </div>
-              </Link>
-            ))}
-          </div>
-        )}
-      </div>
     </div>
   );
 }

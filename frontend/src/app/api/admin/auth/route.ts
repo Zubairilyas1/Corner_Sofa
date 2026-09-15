@@ -1,21 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
-import crypto from 'crypto';
-
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'admin123';
-const TOKEN_SECRET = process.env.TOKEN_SECRET || 'corner-sofa-admin-secret-2026';
-
-function generateToken(password: string): string {
-  const payload = `${password}:${Date.now()}`;
-  const hmac = crypto.createHmac('sha256', TOKEN_SECRET);
-  hmac.update(payload);
-  return `admin_${hmac.digest('hex')}`;
-}
+import { ADMIN_SESSION_COOKIE, ADMIN_SESSION_MAX_AGE, createAdminSession, verifyAdminSession } from '@/lib/admin-session';
 
 export async function POST(request: NextRequest) {
   try {
+    const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
+    if (!ADMIN_PASSWORD) return NextResponse.json({ error: 'Admin login is not configured' }, { status: 503 });
     const { password } = await request.json();
 
-    if (!password) {
+    if (typeof password !== 'string' || !password) {
       return NextResponse.json({ error: 'Password required' }, { status: 400 });
     }
 
@@ -23,14 +15,42 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Invalid password' }, { status: 401 });
     }
 
-    const token = generateToken(password);
+    const session = createAdminSession();
 
-    return NextResponse.json({
+    const response = NextResponse.json({
       success: true,
-      token,
-      expiresAt: Date.now() + 24 * 60 * 60 * 1000, // 24 hours
+      expiresAt: session.expiresAt,
     });
+    response.cookies.set(ADMIN_SESSION_COOKIE, session.token, {
+      httpOnly: true,
+      sameSite: 'strict',
+      secure: request.nextUrl.protocol === 'https:',
+      path: '/',
+      maxAge: ADMIN_SESSION_MAX_AGE,
+      expires: new Date(session.expiresAt),
+    });
+    response.headers.append('Set-Cookie', ADMIN_SESSION_COOKIE + '=; Path=/api/sofa-previews; Max-Age=0; HttpOnly; SameSite=Strict');
+    return response;
   } catch {
     return NextResponse.json({ error: 'Authentication failed' }, { status: 500 });
   }
+}
+
+export async function DELETE(request: NextRequest) {
+  const response = NextResponse.json({ success: true });
+  response.cookies.set(ADMIN_SESSION_COOKIE, '', {
+    httpOnly: true,
+    sameSite: 'strict',
+    secure: request.nextUrl.protocol === 'https:',
+    path: '/',
+    maxAge: 0,
+    expires: new Date(0),
+  });
+  response.headers.append('Set-Cookie', ADMIN_SESSION_COOKIE + '=; Path=/api/sofa-previews; Max-Age=0; HttpOnly; SameSite=Strict');
+  return response;
+}
+
+export async function GET(request: NextRequest) {
+  const valid = verifyAdminSession(request.cookies.get(ADMIN_SESSION_COOKIE)?.value);
+  return NextResponse.json({ valid }, { status: valid ? 200 : 401, headers: { 'Cache-Control': 'no-store' } });
 }

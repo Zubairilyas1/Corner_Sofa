@@ -12,8 +12,15 @@ interface SwatchRequest {
   status?: string;
 }
 
+interface Swatch {
+  id: string;
+  name: string;
+  material: string;
+}
+
 export default function AdminSwatchRequestsPage() {
   const [requests, setRequests] = useState<SwatchRequest[]>([]);
+  const [swatches, setSwatches] = useState<Swatch[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -21,11 +28,18 @@ export default function AdminSwatchRequestsPage() {
       try {
         const res = await fetch('/api/swatch-request');
         if (res.ok) setRequests(await res.json());
+        const swatchRes = await fetch('/api/swatches');
+        if (swatchRes.ok) setSwatches(await swatchRes.json());
       } catch { /* fallback */ }
       setLoading(false);
     }
     fetchRequests();
   }, []);
+
+  const swatchNames = (ids: string[]) => ids?.map((id) => {
+    const swatch = swatches.find((item) => item.id === id);
+    return swatch ? `${swatch.name} (${swatch.material})` : id;
+  }).join(', ');
 
   const handleStatusChange = async (id: string, newStatus: string) => {
     setRequests((prev) => prev.map((r) => r.id === id ? { ...r, status: newStatus } : r));
@@ -94,7 +108,7 @@ export default function AdminSwatchRequestsPage() {
                     <p className="text-white/40 text-xs">{req.shipping_address?.line1}</p>
                     <p className="text-[10px] text-white/20">{req.shipping_address?.city}, {req.shipping_address?.postcode}</p>
                   </td>
-                  <td className="text-white/40">{req.swatch_ids?.length || 0}</td>
+                  <td className="max-w-xs text-white/40 text-xs">{swatchNames(req.swatch_ids) || `${req.swatch_ids?.length || 0} selected`}</td>
                   <td className="text-white/40">{new Date(req.created_at).toLocaleDateString('en-GB')}</td>
                   <td>
                     <select value={req.status || 'pending'} onChange={(e) => handleStatusChange(req.id, e.target.value)}

@@ -25,7 +25,7 @@ export default function CheckoutPage() {
   const { items, total, itemCount, clearCart } = useCart();
   const [deliveryOption, setDeliveryOption] = useState<string>('standard');
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('stripe');
-  const [customerData, setCustomerData] = useState({ name: '', email: '', postcode: '', address: '' });
+  const [customerData, setCustomerData] = useState({ name: '', email: '', phone: '', address: '', city: '', postcode: '' });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [klarnaData, setKlarnaData] = useState<Record<string, unknown> | null>(null);
@@ -34,6 +34,7 @@ export default function CheckoutPage() {
   const selectedDelivery = DELIVERY_OPTIONS.find((d) => d.id === deliveryOption)!;
   const deliveryCost = selectedDelivery.price;
   const orderTotal = total + deliveryCost;
+  const hasSofa = items.some((item) => item.itemType !== 'swatch');
 
   const formatPrice = (n: number) => n.toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
@@ -47,19 +48,43 @@ export default function CheckoutPage() {
     );
   }
 
-  const validate = () => {
+  if (!hasSofa) {
+    return <main className="min-h-[600px] bg-primary flex flex-col items-center justify-center px-5 text-center"><h2 className="text-3xl font-light tracking-[0.1em] text-dark uppercase mb-4">Add a sofa first</h2><p className="max-w-md text-sm text-dark/60 mb-8">A fabric swatch is free, but it must be ordered together with a sofa.</p><Link href="/products"><Button variant="contrast" size="lg">Browse sofas</Button></Link></main>;
+  }
+
+  const validate = async () => {
     const e: Record<string, string> = {};
     if (!customerData.name.trim()) e.name = 'Name is required';
     if (!customerData.email.trim()) e.email = 'Email is required';
     else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(customerData.email)) e.email = 'Invalid email';
+    if (!customerData.phone.trim()) e.phone = 'Phone number is required';
+    else if (!/^[+]?[(\d][\d\s().-]{8,}$/.test(customerData.phone.trim())) e.phone = 'Enter a valid phone number';
     if (!customerData.postcode.trim()) e.postcode = 'Postcode is required';
     if (!customerData.address.trim()) e.address = 'Address is required';
+    if (!customerData.city.trim()) e.city = 'City is required';
+    if (!e.postcode && !e.address && !e.city) {
+      try {
+        const response = await fetch('/api/address/validate', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ postcode: customerData.postcode, city: customerData.city }) });
+        if (!response.ok) e.postcode = (await response.json()).message || 'Check your postcode and address.';
+      } catch { e.postcode = 'We could not verify this postcode. Please check it and try again.'; }
+    }
     setErrors(e);
     return Object.keys(e).length === 0;
   };
 
+  const saveOrder = async (method: PaymentMethod) => {
+    const response = await fetch('/api/orders', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ items, customerDetails: customerData, deliveryCost, paymentMethod: method }),
+    });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error || 'Order could not be saved');
+    return data.order as { id: string };
+  };
+
   const handleStripeSubmit = async () => {
-    if (!validate()) return;
+    if (!await validate()) return;
     setLoading(true);
     setError(null);
     try {
@@ -71,6 +96,7 @@ export default function CheckoutPage() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Payment failed');
       if (data.url) {
+        await saveOrder('stripe');
         clearCart();
         window.location.href = data.url;
       } else {
@@ -83,7 +109,7 @@ export default function CheckoutPage() {
   };
 
   const handleKlarnaSubmit = async () => {
-    if (!validate()) return;
+    if (!await validate()) return;
     setLoading(true);
     setError(null);
     try {
@@ -102,9 +128,17 @@ export default function CheckoutPage() {
     }
   };
 
-  const handlePayWithKlarna = () => {
-    clearCart();
-    window.location.href = '/checkout/success?session_id=klarna_mock';
+  const handlePayWithKlarna = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const order = await saveOrder('klarna');
+      clearCart();
+      window.location.href = `/checkout/success?session_id=${encodeURIComponent(order.id)}`;
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Order could not be confirmed.');
+      setLoading(false);
+    }
   };
 
   return (
@@ -173,8 +207,10 @@ export default function CheckoutPage() {
               <div className="space-y-4">
                 <Input label="Full Name" required placeholder="John Doe" value={customerData.name} onChange={(e) => setCustomerData({ ...customerData, name: e.target.value })} error={errors.name} />
                 <Input label="Email" type="email" required placeholder="john@example.com" value={customerData.email} onChange={(e) => setCustomerData({ ...customerData, email: e.target.value })} error={errors.email} />
+                <Input label="Phone number" type="tel" required placeholder="07123 456789" value={customerData.phone} onChange={(e) => setCustomerData({ ...customerData, phone: e.target.value })} error={errors.phone} />
                 <Input label="Postcode" required placeholder="SW1A 1AA" value={customerData.postcode} onChange={(e) => setCustomerData({ ...customerData, postcode: e.target.value })} error={errors.postcode} />
-                <Input label="Address" required placeholder="123 High Street, London" value={customerData.address} onChange={(e) => setCustomerData({ ...customerData, address: e.target.value })} error={errors.address} />
+                <Input label="Address" required placeholder="123 High Street" value={customerData.address} onChange={(e) => setCustomerData({ ...customerData, address: e.target.value })} error={errors.address} />
+                <Input label="City" required placeholder="London" value={customerData.city} onChange={(e) => setCustomerData({ ...customerData, city: e.target.value })} error={errors.city} />
               </div>
             </div>
           </div>

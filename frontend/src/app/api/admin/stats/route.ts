@@ -1,8 +1,30 @@
+import { requireAdmin } from '@/lib/require-admin';
 import { NextResponse } from 'next/server';
-import { sql } from '@/lib/db';
+import { isDatabaseConfigured, sql } from '@/lib/db';
+import { getLocalProducts } from '@/lib/local-products';
+import { getLocalOrders } from '@/lib/local-orders';
+import { readLocalSwatchRequests } from '@/lib/swatch-request-store';
+
+export const dynamic = 'force-dynamic';
 
 export async function GET() {
+  const denied = await requireAdmin();
+  if (denied) return denied;
   try {
+    if (!isDatabaseConfigured) {
+      const [products, orders, legacySwatches] = await Promise.all([getLocalProducts(), getLocalOrders(), readLocalSwatchRequests()]);
+      return NextResponse.json({
+        products: products.length,
+        swatchRequests: legacySwatches.length + orders.filter((order) => order.lines.some((line) => line.type === 'swatch')).length,
+        appointments: 0,
+        orders: orders.length,
+        pendingAppointments: 0,
+        pendingSwatches: 0,
+        lowStockProducts: products.reduce((count, product) =>
+          count + product.variants.filter((variant) => variant.stock <= 3).length, 0),
+      }, { headers: { 'Cache-Control': 'no-store, max-age=0' } });
+    }
+
     const [products, swatchRequests, appointments] = await Promise.all([
       sql`SELECT COUNT(*) as count FROM products`,
       sql`SELECT COUNT(*) as count FROM swatch_requests`,
@@ -24,15 +46,18 @@ export async function GET() {
       pendingSwatches: parseInt(pendingSwatches[0]?.count || '0'),
       lowStockProducts: parseInt(lowStockProducts[0]?.count || '0'),
     });
-  } catch {
+  } catch (error) {
+    console.error('Error fetching admin stats:', error);
+    const [products, orders, legacySwatches] = await Promise.all([getLocalProducts(), getLocalOrders(), readLocalSwatchRequests()]);
     return NextResponse.json({
-      products: 0,
-      swatchRequests: 0,
+      products: products.length,
+      swatchRequests: legacySwatches.length + orders.filter((order) => order.lines.some((line) => line.type === 'swatch')).length,
       appointments: 0,
-      orders: 0,
+      orders: orders.length,
       pendingAppointments: 0,
       pendingSwatches: 0,
-      lowStockProducts: 0,
-    });
+      lowStockProducts: products.reduce((count, product) =>
+        count + product.variants.filter((variant) => variant.stock <= 3).length, 0),
+    }, { headers: { 'Cache-Control': 'no-store, max-age=0' } });
   }
 }

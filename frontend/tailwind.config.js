@@ -9,17 +9,17 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        primary: '#F7F1DE',
-        secondary: '#B0BA99',
-        accent: '#9D6638',
-        dark: '#4E220F',
-        contrast: '#1A1A1A',
-        gold: '#C5A880',
+        primary: '#faf9f6',
+        secondary: '#c2c9b6',
+        accent: '#65745d',
+        dark: '#26352e',
+        contrast: '#26352e',
+        gold: '#c5b99f',
       },
       fontFamily: {
-        sans: ['var(--font-assistant)', 'Assistant', 'sans-serif'],
-        body: ['var(--font-assistant)', 'Assistant', 'sans-serif'],
-        heading: ['var(--font-assistant)', 'Assistant', 'sans-serif'],
+        sans: ['Inter', 'Segoe UI', 'Arial', 'sans-serif'],
+        body: ['Inter', 'Segoe UI', 'Arial', 'sans-serif'],
+        heading: ['Inter', 'Segoe UI', 'Arial', 'sans-serif'],
       },
       backdropBlur: {
         xs: '2px',

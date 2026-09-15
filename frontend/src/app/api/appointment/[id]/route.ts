@@ -1,3 +1,4 @@
+import { requireAdmin } from '@/lib/require-admin';
 import { NextRequest, NextResponse } from 'next/server';
 import { sql } from '@/lib/db';
 
@@ -7,6 +8,8 @@ export async function PUT(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const denied = await requireAdmin();
+  if (denied) return denied;
   try {
     const { id } = await params;
     const { status } = await request.json();
@@ -41,6 +44,8 @@ export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const denied = await requireAdmin();
+  if (denied) return denied;
   try {
     const { id } = await params;
     const result = await sql`DELETE FROM appointments WHERE id = ${id} RETURNING id`;

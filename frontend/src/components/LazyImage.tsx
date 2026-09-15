@@ -4,24 +4,21 @@ import { useState, ImgHTMLAttributes } from 'react';
 
 interface LazyImageProps extends ImgHTMLAttributes<HTMLImageElement> {
   fallback?: string;
+  imgClassName?: string;
 }
 
-export default function LazyImage({ src, alt, fallback = '/placeholder.svg', className = '', ...props }: LazyImageProps) {
-  const [loaded, setLoaded] = useState(false);
-  const [error, setError] = useState(false);
+export default function LazyImage({ src, alt, fallback = '/images/sofas/premium-three-seater.webp', className = '', imgClassName = '', ...props }: LazyImageProps) {
+  const [failedSource, setFailedSource] = useState<typeof src>();
 
   return (
-    <div className={`relative overflow-hidden ${className}`}>
-      {!loaded && !error && (
-        <div className="absolute inset-0 bg-dark/5 animate-pulse-soft" />
-      )}
+    <div className={`relative overflow-hidden bg-dark/5 ${className}`}>
       <img
-        src={error ? fallback : src}
+        src={failedSource !== undefined && failedSource === src ? fallback : src}
         alt={alt || ''}
         loading="lazy"
-        onLoad={() => setLoaded(true)}
-        onError={() => setError(true)}
-        className={`w-full h-full object-cover transition-opacity duration-500 ${loaded ? 'opacity-100' : 'opacity-0'}`}
+        decoding="async"
+        onError={() => setFailedSource(src)}
+        className={`w-full h-full object-cover ${imgClassName}`}
         {...props}
       />
     </div>

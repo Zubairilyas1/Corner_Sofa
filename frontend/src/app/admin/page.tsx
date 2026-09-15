@@ -1,160 +1,201 @@
-'use client';
+﻿'use client';
 
-import { useState, useEffect } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
+import { ArrowDownLeft, ArrowUpRight, Armchair, Boxes, CalendarDays, Check, ChevronDown, CircleAlert, Clock3, Layers, Package, RefreshCw, Search, Sparkles } from 'lucide-react';
+import styles from './dashboard.module.css';
 
 interface Stats {
-  products: number;
-  swatchRequests: number;
-  appointments: number;
-  orders: number;
-  pendingAppointments: number;
-  pendingSwatches: number;
-  lowStockProducts: number;
+  products: number; swatchRequests: number; appointments: number; orders: number;
+  pendingAppointments: number; pendingSwatches: number; lowStockProducts: number;
 }
+interface Product {
+  id: string; title: string; category: string; images?: string[];
+  variants?: Array<{ stock: number; color: string }>;
+}
+interface Order { id: string; customer: string; total: number; status: string; date: string }
+interface Appointment { id: string; customer_name: string; appointment_date: string; created_at?: string; status: string }
+interface Swatch { id: string; customer_name: string; created_at: string; status?: string; swatch_ids?: string[] }
+type Range = 'year' | 'month' | 'week';
+type WorkType = 'stock' | 'orders' | 'appointments' | 'swatches';
+interface WorkItem { id: string; type: WorkType; title: string; description: string; label: string; href: string; date?: string; image?: string; detail: string }
+interface DashboardData { stats: Stats | null; products: Product[] | null; orders: Order[] | null; appointments: Appointment[] | null; swatches: Swatch[] | null }
+const emptyData: DashboardData = { stats: null, products: null, orders: null, appointments: null, swatches: null };
+const categories = [
+  { name: 'Corner sofas', category: 'Corner', className: styles.pinkBar },
+  { name: '2-seater sofas', category: '2-Seater', className: styles.whiteBar },
+  { name: '3-seater sofas', category: '3-Seater', className: styles.greyBar },
+  { name: 'Recliners', category: 'Recliner', className: styles.stripedBar },
+];
+const actions = [
+  { title: 'Manage products', href: '/admin/products', icon: Armchair, tone: 'yellow' },
+  { title: 'View orders', href: '/admin/orders', icon: Package, tone: 'pink' },
+  { title: 'Fabric requests', href: '/admin/swatch-requests', icon: Layers, tone: 'blue' },
+  { title: 'Appointments', href: '/admin/appointments', icon: CalendarDays, tone: 'purple' },
+];
+const workLabels: Record<WorkType, string> = { stock: 'Stock alerts', orders: 'Orders', appointments: 'Appointments', swatches: 'Swatch requests' };
+const workIcons = { stock: Armchair, orders: Package, appointments: CalendarDays, swatches: Layers };
+const number = (value?: number) => value === undefined ? '—' : value.toLocaleString('en-GB');
+const money = (value: number) => new Intl.NumberFormat('en-GB', { style: 'currency', currency: 'GBP', maximumFractionDigits: 0 }).format(value);
 
-interface Activity {
-  id: string;
-  type: 'appointment' | 'swatch' | 'system';
-  message: string;
-  time: string;
+function createPoints(data: DashboardData, range: Range, now: Date) {
+  const count = range === 'year' ? 12 : range === 'month' ? 30 : 7;
+  const points = Array.from({ length: count }, (_, index) => {
+    const date = range === 'year'
+      ? new Date(now.getFullYear(), now.getMonth() - count + 1 + index, 1)
+      : new Date(now.getFullYear(), now.getMonth(), now.getDate() - count + 1 + index);
+    const end = range === 'year' ? new Date(date.getFullYear(), date.getMonth() + 1, 1) : new Date(date.getFullYear(), date.getMonth(), date.getDate() + 1);
+    return {
+      label: date.toLocaleDateString('en-GB', range === 'year' ? { month: 'short' } : { day: 'numeric', month: 'short' }),
+      fullLabel: date.toLocaleDateString('en-GB', range === 'year' ? { month: 'long', year: 'numeric' } : { day: 'numeric', month: 'long', year: 'numeric' }),
+      start: date.getTime(), end: end.getTime(), orders: 0, appointments: 0, swatches: 0,
+    };
+  });
+  const add = (date: string | undefined, key: 'orders' | 'appointments' | 'swatches') => {
+    if (!date) return;
+    const timestamp = new Date(date).getTime();
+    const point = points.find((entry) => timestamp >= entry.start && timestamp < entry.end);
+    if (point) point[key]++;
+  };
+  data.orders?.forEach((order) => add(order.date, 'orders'));
+  data.appointments?.forEach((appointment) => add(appointment.created_at, 'appointments'));
+  data.swatches?.forEach((swatch) => add(swatch.created_at, 'swatches'));
+  return points;
 }
 
 export default function AdminDashboard() {
-  const [stats, setStats] = useState<Stats>({ products: 0, swatchRequests: 0, appointments: 0, orders: 0, pendingAppointments: 0, pendingSwatches: 0, lowStockProducts: 0 });
-  const [activities, setActivities] = useState<Activity[]>([]);
+  const [data, setData] = useState<DashboardData>(emptyData);
   const [loading, setLoading] = useState(true);
+  const [updatedAt, setUpdatedAt] = useState<Date | null>(null);
+  const [range, setRange] = useState<Range>('month');
+  const [workType, setWorkType] = useState('all');
+  const [sort, setSort] = useState('newest');
+  const [actionQuery, setActionQuery] = useState('');
+  const requestRef = useRef<AbortController | null>(null);
 
-  useEffect(() => {
-    async function fetchDashboard() {
-      try {
-        const [statsRes, appointmentsRes, swatchesRes] = await Promise.all([
-          fetch('/api/admin/stats'),
-          fetch('/api/appointment').catch(() => null),
-          fetch('/api/swatch-request').catch(() => null),
-        ]);
-
-        if (statsRes.ok) setStats(await statsRes.json());
-
-        const acts: Activity[] = [];
-
-        if (appointmentsRes?.ok) {
-          const apts = await appointmentsRes.json();
-          apts.slice(0, 5).forEach((a: { customer_name: string; appointment_date: string; status: string }) => {
-            acts.push({
-              id: `apt-${a.customer_name}`,
-              type: 'appointment',
-              message: `${a.customer_name} booked an appointment`,
-              time: new Date(a.appointment_date).toLocaleDateString('en-GB'),
-            });
-          });
-        }
-
-        if (swatchesRes?.ok) {
-          const sw = await swatchesRes.json();
-          sw.slice(0, 5).forEach((s: { customer_name: string; created_at: string }) => {
-            acts.push({
-              id: `sw-${s.customer_name}`,
-              type: 'swatch',
-              message: `${s.customer_name} requested fabric swatches`,
-              time: new Date(s.created_at).toLocaleDateString('en-GB'),
-            });
-          });
-        }
-
-        acts.push(
-          { id: 'sys-1', type: 'system', message: 'Admin dashboard initialized', time: 'Just now' },
-          { id: 'sys-2', type: 'system', message: 'Stripe test mode active', time: '—' },
-        );
-
-        setActivities(acts);
-      } catch {
-        setStats({ products: 12, swatchRequests: 0, appointments: 0, orders: 0, pendingAppointments: 0, pendingSwatches: 0, lowStockProducts: 0 });
-      }
-      setLoading(false);
-    }
-    fetchDashboard();
+  const loadDashboard = useCallback(async () => {
+    requestRef.current?.abort();
+    const controller = new AbortController();
+    requestRef.current = controller;
+    setLoading(true);
+    const read = async (url: string, array = true) => {
+      const response = await fetch(url, { cache: 'no-store', signal: controller.signal });
+      if (!response.ok) throw new Error('Data unavailable');
+      const result = await response.json();
+      if (array ? !Array.isArray(result) : !result || typeof result !== 'object' || typeof result.products !== 'number') throw new Error('Invalid response');
+      return result;
+    };
+    const results = await Promise.allSettled([
+      read('/api/admin/stats/', false), read('/api/products/'), read('/api/orders/'),
+      read('/api/appointment/'), read('/api/swatch-request/'),
+    ]);
+    if (controller.signal.aborted) return;
+    const value = (index: number) => results[index].status === 'fulfilled' ? results[index].value : null;
+    setData({ stats: value(0), products: value(1), orders: value(2), appointments: value(3), swatches: value(4) });
+    setUpdatedAt(new Date());
+    setLoading(false);
   }, []);
 
-  const cards = [
-    { label: 'Products', value: stats.products, href: '/admin/products', icon: '🛋️' },
-    { label: 'Orders', value: stats.orders, href: '/admin/orders', icon: '📦' },
-    { label: 'Swatch Requests', value: stats.swatchRequests, href: '/admin/swatch-requests', icon: '🎨', badge: stats.pendingSwatches > 0 ? `${stats.pendingSwatches} pending` : undefined },
-    { label: 'Appointments', value: stats.appointments, href: '/admin/appointments', icon: '📅', badge: stats.pendingAppointments > 0 ? `${stats.pendingAppointments} pending` : undefined },
-  ];
+  useEffect(() => {
+    loadDashboard();
+    const refresh = () => { loadDashboard(); };
+    const channel = typeof BroadcastChannel !== 'undefined' ? new BroadcastChannel('corner-sofa-products') : null;
+    channel?.addEventListener('message', refresh);
+    return () => { requestRef.current?.abort(); channel?.close(); };
+  }, [loadDashboard]);
 
-  const alerts = [
-    stats.lowStockProducts > 0 && { type: 'warning' as const, message: `${stats.lowStockProducts} product variants with low stock (≤3 units)` },
-    stats.pendingAppointments > 0 && { type: 'info' as const, message: `${stats.pendingAppointments} appointment(s) awaiting confirmation` },
-    stats.pendingSwatches > 0 && { type: 'info' as const, message: `${stats.pendingSwatches} swatch request(s) to process` },
-  ].filter(Boolean);
+  const stats = data.stats;
+  const points = useMemo(() => createPoints(data, range, updatedAt || new Date()), [data, range, updatedAt]);
+  const variants = data.products?.flatMap((product) => product.variants || []) || [];
+  const stockGroups = [
+    { title: 'Low stock', count: variants.filter((variant) => Number(variant.stock) > 0 && Number(variant.stock) <= 3).length, className: styles.bubblePink },
+    { title: 'Healthy', count: variants.filter((variant) => Number(variant.stock) > 3).length, className: styles.bubbleBlue },
+    { title: 'Sold out', count: variants.filter((variant) => Number(variant.stock) <= 0).length, className: styles.bubbleStriped },
+  ];
+  const inventoryAvailable = data.products !== null;
+  const workItems = useMemo(() => {
+    const result: WorkItem[] = [];
+    data.products?.forEach((product) => {
+      const low = product.variants?.filter((variant) => Number(variant.stock) <= 3) || [];
+      if (low.length) result.push({
+        id: 'stock-' + product.id, type: 'stock', title: product.title, label: low.some((variant) => Number(variant.stock) <= 0) ? 'Sold out' : 'Low stock',
+        description: low.length + (low.length === 1 ? ' finish needs' : ' finishes need') + ' a stock review. Keep your collection ready for customers.',
+        href: '/admin/products', image: product.images?.[0], detail: low.map((variant) => variant.color + ': ' + variant.stock + ' left').join(' · '),
+      });
+    });
+    data.orders?.forEach((order) => {
+      if (!['cancelled', 'delivered'].includes(order.status)) result.push({
+        id: 'order-' + order.id, type: 'orders', title: order.customer, label: order.status || 'Order',
+        description: 'An order is ready for its next step. Review the details and update fulfilment.',
+        href: '/admin/orders', date: order.date, detail: money(Number(order.total)) + ' · ' + order.id,
+      });
+    });
+    data.appointments?.filter((appointment) => appointment.status === 'pending').forEach((appointment) => result.push({
+      id: 'appointment-' + appointment.id, type: 'appointments', title: appointment.customer_name, label: 'Appointment',
+      description: 'A showroom visit is awaiting confirmation.', href: '/admin/appointments',
+      date: appointment.created_at, detail: new Date(appointment.appointment_date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }),
+    }));
+    data.swatches?.filter((swatch) => !['shipped', 'completed', 'cancelled'].includes(swatch.status || '')).forEach((swatch) => result.push({
+      id: 'swatch-' + swatch.id, type: 'swatches', title: swatch.customer_name, label: 'Fabric request',
+      description: 'Review a customer’s fabric selection and request details.', href: '/admin/swatch-requests',
+      date: swatch.created_at, detail: (swatch.swatch_ids?.length || 0) + ' fabric samples',
+    }));
+    return result;
+  }, [data]);
+  const visibleWork = workItems.filter((item) => workType === 'all' || item.type === workType).sort((a, b) => {
+    const diff = (a.date ? new Date(a.date).getTime() : 0) - (b.date ? new Date(b.date).getTime() : 0);
+    return sort === 'newest' ? -diff : diff;
+  }).slice(0, 2);
+  const unavailable = Object.entries(data).filter(([, value]) => value === null).map(([key]) => ({ stats: 'overview', products: 'products', orders: 'orders', appointments: 'appointments', swatches: 'swatches' }[key])).join(', ');
+  const filteredActions = actions.filter((action) => action.title.toLowerCase().includes(actionQuery.toLowerCase().trim()));
 
   return (
-    <div>
-      <h1 className="text-2xl font-light tracking-[0.15em] uppercase text-white/90 mb-8">Dashboard</h1>
-
-      {alerts.length > 0 && (
-        <div className="mb-6 space-y-2">
-          {alerts.map((alert, i) => (
-            <div key={i} className={`admin-card px-4 py-3 flex items-center gap-3 ${alert.type === 'warning' ? 'border-amber-500/20' : 'border-blue-500/20'}`}>
-              <span className="text-xs">{alert.type === 'warning' ? '⚠️' : 'ℹ️'}</span>
-              <p className="text-xs text-white/60">{alert.message}</p>
-            </div>
-          ))}
-        </div>
-      )}
-
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-        {cards.map((card) => (
-          <Link key={card.label} href={card.href} className="admin-card p-6 group">
-            <div className="flex items-center justify-between mb-3">
-              <span className="text-2xl">{card.icon}</span>
-              <span className="text-2xl font-light text-[#C5A880]">{card.value}</span>
-            </div>
-            <p className="text-[10px] text-white/30 uppercase tracking-[0.2em]">{card.label}</p>
-            {card.badge && <p className="text-[10px] text-[#C5A880]/70 mt-1">{card.badge}</p>}
-          </Link>
-        ))}
+    <div className={styles.dashboard}>
+      <div className={styles.headingRow}>
+        <div><div className={styles.kicker}><span /> Your store, at a glance</div><h1>Welcome back, <span>Admin</span></h1><p>Good things are taking shape. Here’s your store today.</p></div>
+        <div className={styles.headingTools}><Link href="/admin/orders" className="rounded-full border border-[#65745d] bg-[#65745d] px-4 py-2.5 text-[11px] font-medium text-white transition-colors hover:bg-[#78896e]">Delivery &amp; email</Link><span className={styles.datePill}><CalendarDays size={14} aria-hidden="true" />{updatedAt?.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) || 'Today'}</span><button type="button" onClick={loadDashboard} disabled={loading} className={styles.refreshButton} aria-label="Refresh dashboard"><RefreshCw size={16} className={loading ? styles.spinning : ''} aria-hidden="true" /></button></div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="admin-card p-6">
-          <h2 className="text-xs font-light tracking-[0.2em] text-white/30 uppercase mb-4">Recent Activity</h2>
-          {loading ? (
-            <div className="flex justify-center py-8">
-              <div className="w-5 h-5 border-2 border-[#C5A880] border-t-transparent rounded-full animate-spin" />
-            </div>
-          ) : (
-            <div className="space-y-2">
-              {activities.map((act) => (
-                <div key={act.id} className="flex items-center gap-3 p-3 rounded-xl bg-white/[0.02] border border-white/[0.04]">
-                  <span className={`w-2 h-2 rounded-full ${act.type === 'appointment' ? 'bg-[#C5A880]' : act.type === 'swatch' ? 'bg-emerald-500' : 'bg-white/20'}`} />
-                  <p className="text-xs text-white/50 flex-1">{act.message}</p>
-                  <span className="text-[10px] text-white/20">{act.time}</span>
-                </div>
-              ))}
-            </div>
-          )}
+      <div className={styles.overviewRow}>
+        <div className={styles.categoryOverview} aria-label="Product category distribution">
+          {categories.map((category) => {
+            const count = data.products?.filter((product) => product.category === category.category).length || 0;
+            const percent = data.products?.length ? Math.round(count / data.products.length * 100) : 0;
+            return <div className={styles.categoryStat} key={category.category}><p>{category.name}</p><div className={category.className} title={inventoryAvailable ? count + ' products' : 'Unavailable'}>{loading || !inventoryAvailable ? '—' : percent + '%'}<span className={styles.srOnly}> of the catalogue</span></div></div>;
+          })}
         </div>
+        <div className={styles.metrics}>
+          {[{ title: 'Total products', value: stats?.products, href: '/admin/products', icon: Armchair, className: styles.greenMetric }, { title: 'Total orders', value: stats?.orders, href: '/admin/orders', icon: Package, className: styles.greenMetric }, { title: 'Low-stock variants', value: stats?.lowStockProducts, href: '/admin/products', icon: ArrowDownLeft, className: styles.orangeMetric }].map(({ icon: Icon, ...metric }) => <Link key={metric.title} href={metric.href} className={styles.metric}><div><span className={metric.className}><Icon size={13} aria-hidden="true" /></span><strong>{loading ? '—' : number(metric.value)}</strong></div><p>{metric.title}</p></Link>)}
+        </div>
+      </div>
 
-        <div className="admin-card p-6">
-          <h2 className="text-xs font-light tracking-[0.2em] text-white/30 uppercase mb-4">Quick Actions</h2>
-          <div className="space-y-2">
-            {[
-              { href: '/admin/products', label: 'Manage Products', icon: '🛋️' },
-              { href: '/admin/orders', label: 'View Orders', icon: '📦' },
-              { href: '/admin/swatch-requests', label: 'Swatch Requests', icon: '🎨' },
-              { href: '/admin/appointments', label: 'Appointments', icon: '📅' },
-              { href: '/', label: 'View Live Site', icon: '🌐' },
-            ].map((link) => (
-              <Link key={link.href} href={link.href} className="flex items-center gap-3 p-3 rounded-xl bg-white/[0.02] border border-white/[0.04] text-xs text-white/40 hover:text-[#C5A880] hover:border-[#C5A880]/20 transition-all">
-                <span>{link.icon}</span>
-                <span className="tracking-wide">{link.label}</span>
-              </Link>
-            ))}
+      {!loading && unavailable && <div className={styles.dataNotice} role="status"><CircleAlert size={15} aria-hidden="true" /><span>Some data couldn’t be loaded: {unavailable}.</span><button onClick={loadDashboard}>Try again</button></div>}
+
+      <div className={styles.topGrid}>
+        <section className={styles.activityPanel} aria-label="Store overview and activity">
+          <div className={styles.summary}>
+            <h2>Summary</h2>
+            <div className={styles.summaryItems}>
+              {[{ title: 'Orders', count: stats?.orders, className: styles.blueDot, href: '/admin/orders' }, { title: 'Appointments', count: stats?.appointments, className: styles.greenDot, href: '/admin/appointments' }, { title: 'Swatch requests', count: stats?.swatchRequests, className: styles.pinkDot, href: '/admin/swatch-requests' }].map((item) => <Link key={item.title} href={item.href} className={styles.summaryItem}><span className={item.className} /><span>{item.title}</span><strong>{loading ? '—' : number(item.count)}</strong></Link>)}
+            </div>
+            <div className={styles.summaryNote}><Sparkles size={17} aria-hidden="true" /><p>{stats ? <><strong>{stats.products} products.</strong> A whole lot of comfort.<br />Keep the details looking their best.</> : <>A little clarity for your everyday.<br />Your latest store totals live here.</>}</p></div>
           </div>
-        </div>
+        </section>
+
+      <div className={styles.bottomGrid}>
+        <section className={styles.workPanel} aria-labelledby="work-heading">
+          <div className={styles.cardHeading}><h2 id="work-heading">On your radar <span className={styles.countPill}>{loading ? '—' : workItems.length}</span></h2><div className={styles.workFilters}><label><span className={styles.srOnly}>Sort activity</span><select value={sort} onChange={(event) => setSort(event.target.value)}><option value="newest">Newest</option><option value="oldest">Oldest</option></select><ChevronDown size={12} aria-hidden="true" /></label><label><span className={styles.srOnly}>Filter activity</span><select value={workType} onChange={(event) => setWorkType(event.target.value)}><option value="all">All</option>{Object.entries(workLabels).map(([value, label]) => <option value={value} key={value}>{label}</option>)}</select><ChevronDown size={12} aria-hidden="true" /></label></div></div>
+          <div className={styles.workCards} aria-live="polite">
+            {loading ? <div className={styles.emptyWork}><RefreshCw size={22} className={styles.spinning} /><p>Bringing your store into focus…</p></div> : visibleWork.length ? visibleWork.map((item) => {
+              const Icon = workIcons[item.type];
+              return <Link className={styles.workCard} href={item.href} key={item.id}><div className={styles.workCardTop}><span className={item.type === 'stock' ? styles.workBadgeWhite : styles.workBadgeBlue}>{item.label}</span><ArrowUpRight size={15} aria-hidden="true" /></div><p className={styles.workDescription}>{item.description}</p><div className={styles.workCardBottom}>{item.image ? <img src={item.image} alt="" width={34} height={34} loading="lazy" className={styles.workImage} /> : <span className={styles.workAvatar}><Icon size={17} aria-hidden="true" /></span>}<div><h3>{item.title}</h3><p>{item.detail}</p></div></div></Link>;
+            }) : <div className={styles.emptyWork}>{unavailable ? <CircleAlert size={25} aria-hidden="true" /> : <Check size={25} aria-hidden="true" />}<p>{unavailable ? 'Activity is unavailable for some sources.' : 'You’re all caught up.'}</p><span>{workType !== 'all' ? 'Try a different activity filter.' : 'New orders, requests and stock alerts appear here.'}</span></div>}
+          </div>
+        </section>
+
       </div>
+      </div>
+      <div className={styles.dashboardFooter}><span><span className={unavailable && !loading ? styles.pinkDot : styles.greenDot} />{loading ? 'Updating your overview…' : unavailable ? 'Some sources are unavailable.' : 'Your store, connected.'}</span><Link href="/admin/orders" className="text-[#c5a880] hover:underline">Open delivery &amp; email controls</Link><span><Clock3 size={12} aria-hidden="true" />{updatedAt ? 'Updated ' + updatedAt.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }) : 'Preparing your workspace'}</span></div>
     </div>
   );
 }

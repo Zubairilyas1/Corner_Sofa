@@ -395,6 +395,59 @@ npm run start
 
 ## Development Workflow
 
+### Product colours and discounts
+
+In **Admin → Products → Edit**, set the selling price and, for a discount, an optional original price. Savings are calculated from these prices. Clearing the original price removes the discount.
+
+Enter the original sofa photograph once in **Main image URL or path**, then use **Add colour** under **Sofa colours**. New colours default to **Generate from main photo**: choosing a swatch automatically creates a recoloured sofa preview and its image link. Review the preview, set the colour name and stock, and wait for generation to finish before saving. Changing the main photo regenerates automatic previews.
+
+Each colour has three image options:
+
+- **Generate from main photo** creates and saves a preview automatically from the original photograph and chosen swatch.
+- **Use main photo** keeps the original photograph, suitable for the sofa's original colour.
+- **Use a colour photo** lets you enter a photograph URL or local image path for that specific colour.
+
+A colour can have its own selling price; leave that field blank to use the product price. Selecting a saved colour changes the card, product gallery, and basket image. Only colours saved in admin appear on the storefront; removing a colour removes it from the available options.
+
+Generated images are labelled **Colour preview** because the actual fabric may vary. Use a clear, centred sofa photograph and check the selection before saving. If generation fails or the result is unsuitable, retry with a clearer main photo or choose **Use a colour photo**.
+
+The local catalogue persists these fields in `frontend/.local-data/products.json`. No example discounts or extra colours are added to existing products.
+
+For an existing PostgreSQL/Neon/Supabase database, apply `backend/migrations/20260909_product_colours_and_discounts.sql` before saving these fields. Fresh installations include the columns in `backend/schema.sql` and `backend/supabase/setup.sql`. The migration adds nullable `products.compare_at_price`, `product_variants.color_hex`, and `product_variants.images`; it preserves existing product and variant IDs. Product and colour updates run in one database transaction.
+
+After a production build, run these checks from `frontend`:
+
+```bash
+node scripts/verify-product-options.cjs
+node scripts/verify-auto-colours.cjs
+```
+
+They verify admin edits, generated previews, saved colour selection, discounts, and basket images using isolated local test catalogues. They do not change the shop's real catalogue.
+
+### Automatic preview setup and storage
+
+After installing dependencies, run this command once from `frontend` on the machine that serves the site:
+
+```bash
+node scripts/prepare-sofa-previews.mjs
+```
+
+This downloads the Apache 2.0-licensed [Xenova/slimsam-77-uniform model](https://huggingface.co/Xenova/slimsam-77-uniform) into `frontend/.cache/sofa-models`. The model selects the sofa on the server; the application then applies the chosen colour while retaining the photo's shading. It is not included in the browser bundle and needs no image-generation API key. The first preview for a new photo takes longer because the sofa selection must be computed; further colours reuse that cached selection.
+
+Preview generation requires the signed admin session cookie issued at sign-in. If admin was already open before this feature was installed, sign out and sign in again once. Saved preview images remain publicly viewable by shoppers.
+
+Generated WebP images and selection masks are stored in `frontend/.local-data/sofa-previews`, or in `<PRODUCT_DATA_DIR>/sofa-previews` when `PRODUCT_DATA_DIR` is configured. Saved products reference these images through `/api/sofa-previews/<hash>.webp`. Preserve this directory across restarts and deployments, including when products are stored in PostgreSQL. The current implementation requires a Node.js server with writable, persistent storage; an ephemeral serverless deployment needs persistent image storage integration before using automatic previews. Keep the model cache available to avoid downloading it again.
+
+### Try in your room
+
+Every customer page includes a **Try in your room** link to `/room-planner/`. The flow is **Your room → Mark wall space → Fit sofa**. After uploading a JPG, PNG or WebP, the customer drags four points around the wall space where the sofa should appear. The lower two points mark where the sofa feet meet the floor. There are no room-size fields, reference measurements, or confirmation checkboxes.
+
+The planner uses the current admin catalogue and saved colour variants. On desktop, sofa and colour choices are on the left, the live room preview stays in the middle, and compact wall-fit controls are on the right. The sofa stays level and front-facing, scales inside the customer's four-point wall area, and keeps the complete cutout visible. A lightweight image-edge check suggests the floor position, and the lower placement points set it when the customer continues. Customers can adjust vertical and horizontal position, wall coverage, side gaps, and where the sofa feet meet the floor. The cutout combines the sofa body and loose cushions so the complete sofa remains visible. This is a visual preview, not a reconstructed 3D view or physical wall measurement.
+
+Room photos remain in the browser and are cleared when leaving or refreshing. Customers can save a PNG preview and add the chosen sofa and colour to their basket. Sofa cutouts reuse the model and persistent storage described under **Automatic preview setup and storage** above.
+
+Validation: `npm test` covers the planner geometry and image analysis. With the site running on port 3100, `node scripts/verify-room-planner.cjs` checks the four-point wall flow, front-view placement, three-column layout, colour changes, wall-fit controls, export, basket action, and mobile layout with isolated browser fixtures (Chrome required). Override `TEST_BASE_URL` for another local port. Fixtures do not modify the shop catalogue.
+
 ### Branch Strategy
 
 - `main` — Production-ready code
@@ -432,3 +485,9 @@ This project is proprietary software. All rights reserved.
 <p align="center">
   Built with precision for the UK handmade furniture market.
 </p>
+
+## Deployment security and storage
+
+Set `ADMIN_PASSWORD` and a random server-only `TOKEN_SECRET` in the deployment environment. Admin login is disabled without a configured password. Admin data and catalogue mutations require a signed HttpOnly session cookie. Keep `.env.local`, `.local-data`, generated artifacts, and caches out of Git.
+
+Vercel root directory: `frontend`. Orders currently use local filesystem storage; persistent order storage and uploaded-image storage must be configured before accepting live customer orders on Vercel.

@@ -1,91 +1,54 @@
+import { requireAdmin } from '@/lib/require-admin';
 import { NextRequest, NextResponse } from 'next/server';
-import { sql } from '@/lib/db';
+import { isDatabaseConfigured, sql } from '@/lib/db';
+import { deleteLocalProduct } from '@/lib/local-products';
+import { findProduct, saveProduct } from '@/lib/product-store';
+import { ProductValidationError } from '@/lib/product-validation';
 
-export async function GET(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export const dynamic = 'force-dynamic';
+type RouteContext = { params: Promise<{ id: string }> };
+
+export async function GET(_request: NextRequest, { params }: RouteContext) {
   try {
     const { id } = await params;
-    const result = await sql`
-      SELECT p.*, json_agg(json_build_object(
-        'id', pv.id,
-        'range_type', pv.range_type,
-        'sku', pv.sku,
-        'price', pv.price,
-        'color', pv.color,
-        'stock', pv.stock
-      )) as variants
-      FROM products p
-      LEFT JOIN product_variants pv ON pv.product_id = p.id
-      WHERE p.id = ${id}
-      GROUP BY p.id
-    `;
-
-    if (result.length === 0) {
-      return NextResponse.json({ error: 'Product not found' }, { status: 404 });
-    }
-
-    return NextResponse.json(result[0]);
-  } catch (err) {
-    console.error('Error fetching product:', err);
+    const product = await findProduct(id);
+    return product
+      ? NextResponse.json(product, { headers: { 'Cache-Control': 'no-store, max-age=0' } })
+      : NextResponse.json({ error: 'Product not found' }, { status: 404 });
+  } catch (error) {
+    console.error('Error fetching product:', error);
     return NextResponse.json({ error: 'Failed to fetch product' }, { status: 500 });
   }
 }
 
-export async function PUT(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function PUT(request: NextRequest, { params }: RouteContext) {
+  const denied = await requireAdmin();
+  if (denied) return denied;
   try {
     const { id } = await params;
-    const body = await request.json();
-    const { title, description, base_price, category, images } = body;
-
-    if (!title || !base_price) {
-      return NextResponse.json({ error: 'Title and price are required' }, { status: 400 });
+    const product = await saveProduct(await request.json(), id);
+    return product ? NextResponse.json({ success: true, product })
+      : NextResponse.json({ error: 'Product not found' }, { status: 404 });
+  } catch (error) {
+    if (error instanceof ProductValidationError || error instanceof SyntaxError) {
+      return NextResponse.json({ error: error instanceof SyntaxError ? 'Invalid product details.' : error.message }, { status: 400 });
     }
-
-    const result = await sql`
-      UPDATE products SET
-        title = ${title},
-        description = ${description || ''},
-        base_price = ${base_price},
-        category = ${category || ''},
-        images = ${images || []}
-      WHERE id = ${id}
-      RETURNING id, title, slug, base_price, category, images
-    `;
-
-    if (result.length === 0) {
-      return NextResponse.json({ error: 'Product not found' }, { status: 404 });
-    }
-
-    return NextResponse.json({ success: true, product: result[0] });
-  } catch (err) {
-    console.error('Error updating product:', err);
-    return NextResponse.json({ error: 'Failed to update product' }, { status: 500 });
+    console.error('Error updating product:', error);
+    return NextResponse.json({ error: 'Could not save product. If using PostgreSQL, check that the product colours migration has been applied.' }, { status: 500 });
   }
 }
 
-export async function DELETE(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function DELETE(_request: NextRequest, { params }: RouteContext) {
+  const denied = await requireAdmin();
+  if (denied) return denied;
   try {
     const { id } = await params;
-
-    // Delete variants first (cascade should handle this, but being explicit)
-    await sql`DELETE FROM product_variants WHERE product_id = ${id}`;
-    const result = await sql`DELETE FROM products WHERE id = ${id} RETURNING id, title`;
-
-    if (result.length === 0) {
-      return NextResponse.json({ error: 'Product not found' }, { status: 404 });
-    }
-
-    return NextResponse.json({ success: true, deleted: result[0] });
-  } catch (err) {
-    console.error('Error deleting product:', err);
+    const deleted = !isDatabaseConfigured ? await deleteLocalProduct(id)
+      : (await sql`DELETE FROM products WHERE id=${id} RETURNING id, title`)[0];
+    return deleted ? NextResponse.json({ success: true, deleted })
+      : NextResponse.json({ error: 'Product not found' }, { status: 404 });
+  } catch (error) {
+    console.error('Error deleting product:', error);
     return NextResponse.json({ error: 'Failed to delete product' }, { status: 500 });
   }
 }

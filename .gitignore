@@ -10,3 +10,6 @@ out/
 .env
 .env.*
 !.env.example
+.local-data/
+.cache/
+frontend/artifacts/

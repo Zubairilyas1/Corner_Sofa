@@ -1,8 +1,13 @@
+import { requireAdmin } from '@/lib/require-admin';
 import { NextRequest, NextResponse } from 'next/server';
 import { sql } from '@/lib/db';
+import { addLocalSwatchRequest, readLocalSwatchRequests } from '@/lib/swatch-request-store';
 
 export async function GET() {
+  const denied = await requireAdmin();
+  if (denied) return denied;
   try {
+    if (!process.env.DATABASE_URL) return NextResponse.json(await readLocalSwatchRequests());
     const result = await sql`
       SELECT id, customer_name, email, shipping_address, swatch_ids, created_at
       FROM swatch_requests
@@ -35,6 +40,11 @@ export async function POST(request: NextRequest) {
         { error: 'Maximum 4 swatches per request' },
         { status: 400 }
       );
+    }
+
+    if (!process.env.DATABASE_URL) {
+      const created = await addLocalSwatchRequest({ customer_name: customerName, email, shipping_address: address, swatch_ids: swatchIds });
+      return NextResponse.json({ success: true, id: created.id, message: 'Swatch request submitted successfully. Expect delivery in 5-7 working days.' });
     }
 
     const result = await sql`

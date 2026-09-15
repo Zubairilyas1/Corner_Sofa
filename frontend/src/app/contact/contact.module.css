@@ -1,0 +1,70 @@
+.scene { min-height: 100svh; padding: clamp(16px,3vw,48px); display: grid; place-items: center; background: linear-gradient(110deg,#000c,#0009),url('/images/about/upholstery-detail.webp') center / cover; color: #111; font-family: Arial,Helvetica,sans-serif; }
+.sheet { width: min(1120px,100%); min-height: calc(100svh - clamp(32px,6vw,96px)); display: flex; flex-direction: column; align-items: center; padding: clamp(22px,3vw,44px); border: 10px solid #111; border-radius: 28px; outline: 2px solid #777; background: #fff; box-shadow: 12px 18px 0 #727270,22px 35px 60px #0008; text-align: center; text-transform: uppercase; }
+.header { width: 100%; display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 20px; }
+.header nav { display: flex; gap: 14px; text-align: left; }
+.header nav a,.shop { font-size: 10px; font-weight: 700; }
+.brand { font-size: clamp(18px,2.4vw,30px); font-weight: 900; letter-spacing: -1.3px; }
+.shop { justify-self: end; }
+.title { margin: 28px 0 22px; font-size: clamp(54px,9.5vw,130px); font-weight: 900; line-height: .95; letter-spacing: -.055em; }
+.person { margin: 20px 0; }
+.person h2 { color: #c90013; font-size: clamp(28px,3.6vw,46px); font-weight: 800; line-height: 1.05; letter-spacing: -.045em; }
+.person p { margin-top: 7px; font-size: 11px; font-weight: 700; }
+.phoneBlock { display: flex; flex-direction: column; align-items: center; gap: 13px; margin: clamp(28px,5vh,58px) 0; }
+.phone { display: inline-flex; align-items: center; justify-content: center; gap: 13px; font-size: clamp(23px,3.1vw,40px); font-weight: 800; letter-spacing: -.04em; }
+.phone svg { width: 25px; height: 25px; flex-shrink: 0; stroke-width: 1.7; }
+.whatsapp { display: inline-flex; align-items: center; gap: 7px; color: #c90013; font-size: 13px; font-weight: 800; padding: 8px 12px; }
+.emails { display: flex; flex-direction: column; align-items: center; gap: 12px; margin: auto 0 38px; padding-top: 14px; width: 100%; }
+.emails a { max-width: 100%; overflow-wrap: anywhere; color: #c90013; font-size: clamp(16px,2.6vw,32px); font-weight: 800; line-height: 1.15; letter-spacing: -.04em; }
+.footer { margin-top: auto; width: 100%; display: flex; justify-content: space-between; gap: 16px; font-size: 9px; font-weight: 700; }
+.sheet a { text-decoration: none; }
+.sheet a:hover { text-decoration: underline; text-underline-offset: 5px; }
+.sheet a:focus-visible { outline: 2px solid #c90013; outline-offset: 6px; border-radius: 3px; }
+@media (max-width: 600px) {
+  .scene { padding: 12px 16px 22px 10px; }
+  .sheet { min-height: calc(100svh - 34px); padding: 25px 14px 18px; border-width: 6px; border-radius: 22px; box-shadow: 5px 8px 0 #727270,10px 18px 28px #0008; }
+  .header { grid-template-columns: 1fr auto; gap: 18px 10px; }
+  .brand { grid-column: 1/-1; grid-row: 1; font-size: 26px; }
+  .header nav { gap: 10px; }
+  .header nav a,.shop { font-size: 9px; }
+  .title { margin-top: 38px; font-size: clamp(43px,12vw,72px); }
+  .person { margin: 22px 0 10px; }
+  .phoneBlock { margin: 36px 0; }
+  .emails { gap: 17px; margin-bottom: 40px; }
+}
+
+/* Interactive tablet on the reference's charcoal fabric. */
+.scene { min-height:100svh;padding:110px 8%;justify-items:start;background:#29292b url('/images/about/contact-charcoal-fabric.webp') center/cover;overflow:hidden;perspective:1600px; }
+.sheet { width:min(760px,65vw);min-height:0;margin:0 0 0 5%;padding:25px 35px 20px;border:12px solid #090a0b;border-radius:28px;outline:2px solid #8d8f90;transform:rotateX(16deg) rotateZ(-22deg);box-shadow:4px 11px 0 #17191b,10px 22px 38px #0009; }
+.header { gap:10px; }.header nav{gap:10px}.header nav a,.shop{font-size:8px}.brand{font-size:13px;letter-spacing:-.5px}
+.aboutLabel { font-size:15px;font-weight:700;margin-top:15px; }
+.title { font-size:clamp(38px,4.8vw,68px);margin:8px 0 16px;white-space:nowrap; }
+.person { margin:0 0 16px; }.person h2{color:#111;font-size:20px}.person p{font-size:13px;line-height:1.4;text-transform:none;max-width:470px}
+.tabletStory>p { font-size:19px;line-height:1.2;font-weight:700; }.tabletStory h2{font-size:23px;line-height:1.08;font-weight:800;letter-spacing:-1px;margin:16px 0}.tabletStory>span{font-size:16px;font-weight:700}
+.phoneBlock { flex-direction:row;flex-wrap:wrap;justify-content:center;gap:10px;margin:20px 0 8px; }
+.phone,.whatsapp { display:inline-flex;gap:7px;min-height:42px;padding:11px 16px;border-radius:35px;background:#202220;color:#fff;font-size:13px;letter-spacing:0;font-weight:700; }.phone svg{width:17px;height:17px}.whatsapp svg{color:#9dd887}
+.emails { margin:10px 0 18px;padding:0;gap:8px; }.emails a{display:flex;align-items:center;justify-content:center;gap:9px;color:#fff;background:#202220;border-radius:30px;padding:10px 17px;font-size:15px;font-weight:600;letter-spacing:-.3px;text-transform:none;overflow-wrap:anywhere}.emails svg{flex-shrink:0}
+.footer{font-size:8px;margin-top:4px}
+@media(max-width:900px){.scene{padding:90px 5%;justify-items:center}.sheet{width:85vw;margin:0;padding:25px;transform:rotateX(10deg) rotateZ(-12deg)}.title{font-size:48px}}
+@media(max-width:600px){.scene{padding:45px 14px}.sheet{width:100%;max-width:420px;transform:rotateZ(-3deg);padding:22px 14px;border-width:8px;border-radius:23px}.header{grid-template-columns:1fr auto}.brand{grid-row:auto;grid-column:auto;font-size:13px}.header nav{gap:7px}.header nav a,.shop{font-size:7px}.shop{display:none}.aboutLabel{font-size:12px;margin-top:20px}.title{font-size:clamp(29px,8vw,42px)}.tabletStory>p{font-size:16px}.tabletStory h2{font-size:21px}.person p{font-size:12px}.phoneBlock{gap:8px}.phone,.whatsapp{font-size:11px;padding:10px 12px}.emails a{font-size:clamp(10px,3vw,13px);padding:10px 12px}.emails{width:100%}.emails a{max-width:100%}}
+
+/* Keep the full tablet visible, including when browser zoom changes. */
+@media (min-width: 901px) {
+  .scene { height: 100svh; min-height: 0; padding: 0 8%; }
+  .sheet { transform: translateY(-30px) rotateX(16deg) rotateZ(-22deg) scale(calc(100svh / 930px)); transform-origin: center; }
+}
+
+/* Saved light/dark theme palettes */
+:global(html[data-theme="light"]) .scene{background:linear-gradient(110deg,rgba(245,246,242,0.8),rgba(245,246,242,0.6)),url('/images/about/upholstery-detail.webp') center / cover}
+:global(html[data-theme="light"]) .sheet{border:10px solid rgba(200,207,196,1)}
+:global(html[data-theme="light"]) .scene{background:rgba(245,246,242,1) url('/images/about/contact-charcoal-fabric.webp') center/cover}
+:global(html[data-theme="light"]) .sheet{border:12px solid rgba(200,207,196,1)}
+:global(html[data-theme="light"]) .phone,:global(html[data-theme="light"]) .whatsapp{background:rgba(245,246,242,1);color:rgba(48,62,52,1)}
+:global(html[data-theme="light"]) .whatsapp svg{color:rgba(48,62,52,1)}
+:global(html[data-theme="light"]) .emails a{color:rgba(48,62,52,1);background:rgba(245,246,242,1)}
+:global(html[data-theme="dark"]) .scene{color:rgba(231,236,227,1)}
+:global(html[data-theme="dark"]) .sheet{border:10px solid rgba(73,85,75,1);background:rgba(29,35,31,1)}
+:global(html[data-theme="dark"]) .person h2{color:rgba(231,236,227,1)}
+:global(html[data-theme="dark"]) .whatsapp{color:rgba(231,236,227,1)}
+:global(html[data-theme="dark"]) .emails a{color:rgba(231,236,227,1)}
+:global(html[data-theme="dark"]) .sheet{border:12px solid rgba(73,85,75,1)}
+:global(html[data-theme="dark"]) .person h2{color:rgba(231,236,227,1)}

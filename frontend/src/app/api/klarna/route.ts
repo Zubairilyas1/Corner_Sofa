@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { CheckoutValidationError, validateCheckoutItems } from '@/lib/checkout-products';
 
 export async function POST(request: NextRequest) {
   try {
@@ -8,8 +9,9 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Cart is empty' }, { status: 400 });
     }
 
-    const totalAmount = items.reduce(
-      (sum: number, item: { price: number; quantity: number }) =>
+    const validatedItems = await validateCheckoutItems(items);
+    const totalAmount = validatedItems.reduce(
+      (sum, item) =>
         sum + item.price * item.quantity,
       0
     );
@@ -35,7 +37,8 @@ export async function POST(request: NextRequest) {
       total_amount: totalAmount,
       currency: 'GBP',
     });
-  } catch {
+  } catch (error) {
+    if (error instanceof CheckoutValidationError) return NextResponse.json({ error: error.message }, { status: 400 });
     return NextResponse.json(
       { error: 'Failed to create Klarna session' },
       { status: 500 }

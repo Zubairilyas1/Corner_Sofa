@@ -1,0 +1,67 @@
+.widget{position:fixed;bottom:20px;right:20px;z-index:90;font-family:Arial,sans-serif;color:#25362c;font-size:14px}.launcher{display:flex;align-items:center;gap:12px;padding:15px 22px;background:#25392e;color:white;border:1px solid #8b9f85;border-radius:30px;box-shadow:0 10px 35px #0003}.launcher span{text-align:left;font-weight:700;letter-spacing:2px}.launcher small{display:block;font-size:10px;font-weight:400;letter-spacing:0;margin-top:3px}.panel{width:390px;max-width:calc(100vw - 24px);height:min(730px,calc(100dvh - 32px));display:flex;flex-direction:column;background:#faf9f5;border:1px solid #d2d9cf;border-radius:22px;overflow:hidden;box-shadow:0 18px 70px #0004}.panel header{display:flex;gap:12px;align-items:center;padding:16px;background:#25392e;color:white}.panel header small{display:block;font-size:10px;opacity:.75;margin-top:4px}.panel header strong{letter-spacing:3px}.panel header button{margin-left:auto}.mark{padding:8px;background:#ffffff18;border-radius:12px}.messages{flex:1;overflow:auto;padding:15px;overscroll-behavior:contain}.assistant,.customer{padding:12px;border-radius:14px;margin-bottom:12px;line-height:1.5;white-space:pre-wrap}.assistant{background:white;border:1px solid #e3e7df}.customer{background:#e0ebdc;margin-left:25px}.messages img{width:100%;border-radius:10px;max-height:220px;object-fit:cover}.product{display:flex;flex-direction:column;gap:6px;border-top:1px solid #ddd;margin-top:12px;padding-top:12px}.product small{font-size:11px}.product a{font-weight:700;text-decoration:underline}.product button{display:flex;gap:8px;align-items:center;justify-content:center;padding:9px;background:#314736;color:white;border-radius:20px;margin-top:3px}.product button:disabled{opacity:.4}.contact{display:flex;justify-content:space-between;padding:10px 16px;border-top:1px solid #ddd;font-size:11px}.composer{padding:12px 14px;background:white;border-top:1px solid #e0e3dc}.uploads{display:flex;gap:8px}.uploads label{display:flex;align-items:center;gap:5px;border:1px solid #ccd5c9;border-radius:14px;padding:7px;cursor:pointer;font-size:12px}.uploads input{position:absolute;width:1px;height:1px;opacity:0}.uploads label:focus-within{outline:2px solid #f87a17}.hint{display:block;font-size:10px;color:#687564;margin:8px 0;line-height:1.4}.entry{display:flex;align-items:center;border:1px solid #c6d0c2;border-radius:14px;padding:5px 9px;gap:5px}.entry textarea{resize:none;flex:1;min-width:0;outline:none;background:transparent;height:50px;font-size:13px;padding:6px}.entry button{padding:10px;background:#f87a17;color:white;border-radius:50%}.entry button:disabled{opacity:.4}.error{color:#a12a20;font-size:12px;margin-top:7px}.file{display:flex;align-items:center;justify-content:space-between;overflow-wrap:anywhere;font-size:11px;margin-top:8px}.panel button:focus-visible,.panel a:focus-visible{outline:2px solid #f87a17;outline-offset:2px}@media(max-width:500px){.widget{right:12px;bottom:12px}.panel{height:calc(100dvh - 24px);width:calc(100vw - 24px)}}
+/* ALASHI: compact violet AI studio, keeping the green closed launcher. */
+.panel{background:#080416;border-color:#59468a;color:#f3edff;box-shadow:0 18px 70px #0008,0 0 26px #8653fc25}
+.panel header{background:#0b061c;border-bottom:1px solid #ffffff12;padding:14px 16px}.panel header strong{font-size:18px;letter-spacing:4px}.mark{background:#8756ef20;color:#c7a9ff}.intro{text-align:center;position:relative;padding:18px 12px 24px;overflow:hidden;background:radial-gradient(ellipse at bottom,#7648c943,transparent 70%)}.intro:after{content:'';position:absolute;width:280px;height:180px;border:1px solid #ad86ff25;border-radius:50%;top:40px;left:50%;transform:translateX(-50%);pointer-events:none}.intro span{font-size:10px;border:1px solid #bfa0ff30;border-radius:20px;padding:4px 9px;color:#c8b6e4}.intro h2{font-size:17px;line-height:1.3;margin-top:13px;font-weight:600}.messages{padding:12px;background:radial-gradient(ellipse at top,#6137a81a,transparent 65%)}.assistant{background:#ffffff07;border-color:#b59af924}.customer{background:#7348b938;border:1px solid #b98eff30}.product{border-color:#ffffff1c}.product small{color:#c8bdd8}.product button{background:#7446d9;border:1px solid #af88ff45}.product b{font-size:16px;color:#dfccff}.product details{font-size:11px}.product summary{cursor:pointer}.contact{border-color:#c8a3ff20;color:#c5b2e2;background:#0b0719}.composer{background:#19191f;border-color:#b58bf94a;box-shadow:0 -8px 25px #844af51a}.uploads label{border-color:#887ba44a;background:#28262f;color:#e6ddf3}.entry{border-color:#9470b4;background:#252629;box-shadow:0 0 12px #965bea36}.entry textarea{color:white}.entry button{background:#774ee0;border-radius:9px}.hint{color:#a9a0b9;font-size:9px}.file{color:#d4c4ea}.error{color:#e6b9f5}.cancel{margin-top:7px;padding:5px 10px;border:1px solid #77717e;border-radius:6px;font-size:11px}.visit{display:block;margin-top:10px;color:#d7bfff;text-decoration:underline}
+
+/* Saved light/dark theme palettes */
+:global(html[data-theme="light"]) .launcher{background:rgba(245,246,242,1);color:rgba(48,62,52,1);border:1px solid rgba(200,207,196,1)}
+:global(html[data-theme="light"]) .panel{border:1px solid rgba(200,207,196,1)}
+:global(html[data-theme="light"]) .panel header{background:rgba(245,246,242,1);color:rgba(48,62,52,1)}
+:global(html[data-theme="light"]) .assistant{border:1px solid rgba(200,207,196,1)}
+:global(html[data-theme="light"]) .product{border-top:1px solid rgba(200,207,196,1)}
+:global(html[data-theme="light"]) .product button{background:rgba(245,246,242,1);color:rgba(48,62,52,1)}
+:global(html[data-theme="light"]) .contact{border-top:1px solid rgba(200,207,196,1)}
+:global(html[data-theme="light"]) .composer{border-top:1px solid rgba(200,207,196,1)}
+:global(html[data-theme="light"]) .uploads label{border:1px solid rgba(200,207,196,1)}
+:global(html[data-theme="light"]) .entry{border:1px solid rgba(200,207,196,1)}
+:global(html[data-theme="light"]) .entry button{color:rgba(48,62,52,1)}
+:global(html[data-theme="light"]) .panel{background:rgba(245,246,242,1);border-color:rgba(200,207,196,1);color:rgba(48,62,52,1)}
+:global(html[data-theme="light"]) .panel header{background:rgba(245,246,242,1);border-bottom:1px solid rgba(200,207,196,0.07058823529411765)}
+:global(html[data-theme="light"]) .mark{background:rgba(245,246,242,0.12549019607843137);color:rgba(48,62,52,1)}
+:global(html[data-theme="light"]) .intro{background:radial-gradient(ellipse at bottom,rgba(245,246,242,0.2627450980392157),transparent 70%)}
+:global(html[data-theme="light"]) .intro:after{border:1px solid rgba(200,207,196,0.1450980392156863)}
+:global(html[data-theme="light"]) .intro span{border:1px solid rgba(200,207,196,0.18823529411764706);color:rgba(48,62,52,1)}
+:global(html[data-theme="light"]) .messages{background:radial-gradient(ellipse at top,rgba(245,246,242,0.10196078431372549),transparent 65%)}
+:global(html[data-theme="light"]) .assistant{border-color:rgba(200,207,196,0.1411764705882353)}
+:global(html[data-theme="light"]) .customer{background:rgba(245,246,242,0.2196078431372549);border:1px solid rgba(200,207,196,0.18823529411764706)}
+:global(html[data-theme="light"]) .product{border-color:rgba(200,207,196,0.10980392156862745)}
+:global(html[data-theme="light"]) .product small{color:rgba(48,62,52,1)}
+:global(html[data-theme="light"]) .product button{background:rgba(245,246,242,1);border:1px solid rgba(200,207,196,0.27058823529411763)}
+:global(html[data-theme="light"]) .product b{color:rgba(48,62,52,1)}
+:global(html[data-theme="light"]) .contact{border-color:rgba(200,207,196,0.12549019607843137);color:rgba(48,62,52,1);background:rgba(245,246,242,1)}
+:global(html[data-theme="light"]) .composer{background:rgba(245,246,242,1);border-color:rgba(200,207,196,0.2901960784313726)}
+:global(html[data-theme="light"]) .uploads label{border-color:rgba(200,207,196,0.2901960784313726);background:rgba(245,246,242,1);color:rgba(48,62,52,1)}
+:global(html[data-theme="light"]) .entry{border-color:rgba(200,207,196,1);background:rgba(245,246,242,1)}
+:global(html[data-theme="light"]) .entry textarea{color:rgba(48,62,52,1)}
+:global(html[data-theme="light"]) .entry button{background:rgba(245,246,242,1)}
+:global(html[data-theme="light"]) .hint{color:rgba(48,62,52,1)}
+:global(html[data-theme="light"]) .file{color:rgba(48,62,52,1)}
+:global(html[data-theme="light"]) .error{color:rgba(48,62,52,1)}
+:global(html[data-theme="light"]) .cancel{border:1px solid rgba(200,207,196,1)}
+:global(html[data-theme="light"]) .visit{color:rgba(48,62,52,1)}
+:global(html[data-theme="dark"]) .widget{color:rgba(231,236,227,1)}
+:global(html[data-theme="dark"]) .launcher{border:1px solid rgba(73,85,75,1)}
+:global(html[data-theme="dark"]) .panel{background:rgba(29,35,31,1);border:1px solid rgba(73,85,75,1)}
+:global(html[data-theme="dark"]) .mark{background:rgba(29,35,31,0.09411764705882353)}
+:global(html[data-theme="dark"]) .assistant{background:rgba(29,35,31,1);border:1px solid rgba(73,85,75,1)}
+:global(html[data-theme="dark"]) .customer{background:rgba(29,35,31,1)}
+:global(html[data-theme="dark"]) .product{border-top:1px solid rgba(73,85,75,1)}
+:global(html[data-theme="dark"]) .contact{border-top:1px solid rgba(73,85,75,1)}
+:global(html[data-theme="dark"]) .composer{background:rgba(29,35,31,1);border-top:1px solid rgba(73,85,75,1)}
+:global(html[data-theme="dark"]) .uploads label{border:1px solid rgba(73,85,75,1)}
+:global(html[data-theme="dark"]) .hint{color:rgba(231,236,227,1)}
+:global(html[data-theme="dark"]) .entry{border:1px solid rgba(73,85,75,1)}
+:global(html[data-theme="dark"]) .error{color:rgba(231,236,227,1)}
+:global(html[data-theme="dark"]) .panel{border-color:rgba(73,85,75,1)}
+:global(html[data-theme="dark"]) .panel header{border-bottom:1px solid rgba(73,85,75,0.07058823529411765)}
+:global(html[data-theme="dark"]) .intro:after{border:1px solid rgba(73,85,75,0.1450980392156863)}
+:global(html[data-theme="dark"]) .intro span{border:1px solid rgba(73,85,75,0.18823529411764706)}
+:global(html[data-theme="dark"]) .assistant{background:rgba(29,35,31,0.027450980392156862);border-color:rgba(73,85,75,0.1411764705882353)}
+:global(html[data-theme="dark"]) .customer{border:1px solid rgba(73,85,75,0.18823529411764706)}
+:global(html[data-theme="dark"]) .product{border-color:rgba(73,85,75,0.10980392156862745)}
+:global(html[data-theme="dark"]) .product button{border:1px solid rgba(73,85,75,0.27058823529411763)}
+:global(html[data-theme="dark"]) .contact{border-color:rgba(73,85,75,0.12549019607843137)}
+:global(html[data-theme="dark"]) .composer{border-color:rgba(73,85,75,0.2901960784313726)}
+:global(html[data-theme="dark"]) .uploads label{border-color:rgba(73,85,75,0.2901960784313726)}
+:global(html[data-theme="dark"]) .entry{border-color:rgba(73,85,75,1)}
+:global(html[data-theme="dark"]) .cancel{border:1px solid rgba(73,85,75,1)}
